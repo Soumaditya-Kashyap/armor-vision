@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+PLATFORM_FIXES.md
+dev.bat
+DEV_GUIDE.md
