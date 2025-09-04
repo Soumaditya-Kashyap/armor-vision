@@ -37,13 +37,14 @@ class AppSettingsAdapter extends TypeAdapter<AppSettings> {
       totalEntries: fields[17] as int,
       createdAt: fields[18] as DateTime,
       updatedAt: fields[19] as DateTime,
+      themeMode: fields[20] as ArmorThemeMode?,
     );
   }
 
   @override
   void write(BinaryWriter writer, AppSettings obj) {
     writer
-      ..writeByte(20)
+      ..writeByte(21)
       ..writeByte(0)
       ..write(obj.isDarkMode)
       ..writeByte(1)
@@ -83,7 +84,9 @@ class AppSettingsAdapter extends TypeAdapter<AppSettings> {
       ..writeByte(18)
       ..write(obj.createdAt)
       ..writeByte(19)
-      ..write(obj.updatedAt);
+      ..write(obj.updatedAt)
+      ..writeByte(20)
+      ..write(obj.themeMode);
   }
 
   @override

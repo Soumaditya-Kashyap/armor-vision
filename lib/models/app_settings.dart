@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import '../utils/armor_themes.dart';
 
 part 'app_settings.g.dart';
 
@@ -64,6 +65,9 @@ class AppSettings extends HiveObject {
   @HiveField(19)
   DateTime updatedAt;
 
+  @HiveField(20)
+  ArmorThemeMode? themeMode;
+
   AppSettings({
     this.isDarkMode = false,
     this.isBiometricEnabled = true,
@@ -85,7 +89,11 @@ class AppSettings extends HiveObject {
     this.totalEntries = 0,
     required this.createdAt,
     required this.updatedAt,
+    this.themeMode,
   });
+
+  // Getter to provide a default theme mode
+  ArmorThemeMode get effectiveThemeMode => themeMode ?? ArmorThemeMode.system;
 
   AppSettings copyWith({
     bool? isDarkMode,
@@ -108,6 +116,7 @@ class AppSettings extends HiveObject {
     int? totalEntries,
     DateTime? createdAt,
     DateTime? updatedAt,
+    ArmorThemeMode? themeMode,
   }) {
     return AppSettings(
       isDarkMode: isDarkMode ?? this.isDarkMode,
@@ -131,6 +140,7 @@ class AppSettings extends HiveObject {
       totalEntries: totalEntries ?? this.totalEntries,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      themeMode: themeMode ?? this.themeMode,
     );
   }
 }

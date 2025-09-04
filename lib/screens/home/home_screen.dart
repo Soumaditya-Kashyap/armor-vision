@@ -82,9 +82,9 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_searchQuery.isNotEmpty) {
       entries = entries.where((entry) {
         return entry.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            (entry.description
-                    ?.toLowerCase()
-                    .contains(_searchQuery.toLowerCase()) ==
+            (entry.description?.toLowerCase().contains(
+                  _searchQuery.toLowerCase(),
+                ) ==
                 true);
       }).toList();
     }
@@ -98,9 +98,9 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_searchQuery.isNotEmpty) {
       entries = entries.where((entry) {
         return entry.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            (entry.description
-                    ?.toLowerCase()
-                    .contains(_searchQuery.toLowerCase()) ==
+            (entry.description?.toLowerCase().contains(
+                  _searchQuery.toLowerCase(),
+                ) ==
                 true);
       }).toList();
     }
@@ -159,7 +159,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       IconButton(
                         onPressed: () {
-                          // TODO: Settings
+                          Navigator.of(context).pushNamed('/settings');
                         },
                         icon: const Icon(Icons.settings_rounded, size: 18),
                         constraints: const BoxConstraints(
@@ -366,8 +366,9 @@ class _HomeScreenState extends State<HomeScreen> {
       itemCount: _categories.length,
       itemBuilder: (context, index) {
         final category = _categories[index];
-        final entryCount =
-            _allEntries.where((e) => e.category == category.id).length;
+        final entryCount = _allEntries
+            .where((e) => e.category == category.id)
+            .length;
 
         return Card(
           child: InkWell(
@@ -384,8 +385,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: AppHelpers.getEntryColor(category.color)
-                          .withOpacity(0.2),
+                      color: AppHelpers.getEntryColor(
+                        category.color,
+                      ).withOpacity(0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
@@ -399,8 +401,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Text(
                       category.name,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                        fontWeight: FontWeight.w600,
+                      ),
                       textAlign: TextAlign.center,
                       overflow: TextOverflow.ellipsis,
                       maxLines: 2,
@@ -411,11 +413,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Text(
                       '$entryCount ${entryCount == 1 ? 'entry' : 'entries'}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withOpacity(0.6),
-                          ),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withOpacity(0.6),
+                      ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
@@ -449,11 +450,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: colorScheme.surfaceVariant.withOpacity(0.5),
                 borderRadius: BorderRadius.circular(25),
               ),
-              child: Icon(
-                icon,
-                size: 50,
-                color: colorScheme.onSurfaceVariant,
-              ),
+              child: Icon(icon, size: 50, color: colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 24),
             Text(
@@ -541,8 +538,9 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Add New Entry'),
-        content:
-            const Text('Entry creation will be implemented in the next phase.'),
+        content: const Text(
+          'Entry creation will be implemented in the next phase.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),

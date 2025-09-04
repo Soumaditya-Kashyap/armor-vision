@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
+import '../../utils/constants.dart';
 import '../home/home_screen.dart';
 
 class AuthScreen extends StatefulWidget {
@@ -19,7 +20,8 @@ class _AuthScreenState extends State<AuthScreen>
   bool _isAuthenticating = false;
   String? _errorMessage;
   bool _showSkipOption = false;
-  DeviceSecurityStatus? _securityStatus;
+  BiometricCapability _biometricCapability = BiometricCapability.notAvailable;
+  DeviceSecurityStatus? _deviceSecurityStatus;
 
   @override
   void initState() {
@@ -53,9 +55,12 @@ class _AuthScreenState extends State<AuthScreen>
   }
 
   Future<void> _checkDeviceSecurityStatus() async {
-    final status = await _authService.getDeviceSecurityStatus();
+    final securityStatus = await _authService.getDeviceSecurityStatus();
+    final capability = await _authService.getBiometricCapability();
+
     setState(() {
-      _securityStatus = status;
+      _deviceSecurityStatus = securityStatus;
+      _biometricCapability = capability;
     });
   }
 
@@ -66,7 +71,21 @@ class _AuthScreenState extends State<AuthScreen>
     });
 
     try {
-      // Simple authentication like Google Pay - use device lock
+      // Check if device has no security setup
+      if (_deviceSecurityStatus?.hasDeviceLock == false) {
+        // Device has no lock, use bypass authentication
+        final result = await _authService.bypassAuthentication();
+        if (result.success) {
+          _navigateToHome();
+        } else {
+          setState(() {
+            _errorMessage = 'Failed to initialize secure session';
+          });
+        }
+        return;
+      }
+
+      // Device has security, proceed with normal authentication
       final result = await _authService.authenticate(
         reason: 'Unlock your secure password vault',
         allowDeviceCredentials: true,
@@ -77,15 +96,14 @@ class _AuthScreenState extends State<AuthScreen>
       } else {
         setState(() {
           _errorMessage = _getErrorMessage(result);
-          _showSkipOption =
-              result.error == AuthError.platformError ||
-              result.error == AuthError.notAvailable;
+          // Show skip option for platform errors (like FragmentActivity issue)
+          _showSkipOption = result.error == AuthError.platformError;
         });
       }
     } catch (e) {
       setState(() {
         _errorMessage = 'Authentication failed: ${e.toString()}';
-        _showSkipOption = true;
+        _showSkipOption = true; // Allow skip for unexpected errors
       });
     } finally {
       setState(() {
@@ -99,9 +117,9 @@ class _AuthScreenState extends State<AuthScreen>
       case AuthError.userCancelled:
         return 'Authentication was cancelled';
       case AuthError.notAvailable:
-        return 'Authentication is not available on this device';
+        return 'Biometric authentication is not available';
       case AuthError.notEnrolled:
-        return 'No authentication method is set up on this device';
+        return 'No biometrics are enrolled on this device';
       case AuthError.passcodeNotSet:
         return 'Device passcode is not set';
       case AuthError.lockedOut:
@@ -221,7 +239,9 @@ class _AuthScreenState extends State<AuthScreen>
                                 const SizedBox(height: 8),
 
                                 Text(
-                                  'Authenticate to access your secure vault',
+                                  _deviceSecurityStatus?.hasDeviceLock == false
+                                      ? 'No device lock detected'
+                                      : 'Authenticate to access your secure vault',
                                   style: theme.textTheme.bodyLarge?.copyWith(
                                     color: colorScheme.onSurface.withOpacity(
                                       0.7,
@@ -240,80 +260,9 @@ class _AuthScreenState extends State<AuthScreen>
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              // Check device security status
-                              if (_securityStatus?.requiresDeviceSetup ==
-                                  true) ...[
-                                // No Device Lock - Direct Access
-                                Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: colorScheme.secondaryContainer,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: colorScheme.outline.withOpacity(
-                                        0.2,
-                                      ),
-                                    ),
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      Icon(
-                                        Icons.info_outline_rounded,
-                                        color: colorScheme.onSecondaryContainer,
-                                        size: 32,
-                                      ),
-                                      const SizedBox(height: 12),
-                                      Text(
-                                        'No Device Lock Detected',
-                                        style: theme.textTheme.titleMedium
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.w600,
-                                              color: colorScheme
-                                                  .onSecondaryContainer,
-                                            ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        'Your device doesn\'t have a lock screen set up. For better security, please set up a PIN, pattern, or biometric authentication in your device settings.',
-                                        style: theme.textTheme.bodySmall
-                                            ?.copyWith(
-                                              color: colorScheme
-                                                  .onSecondaryContainer
-                                                  .withOpacity(0.8),
-                                            ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 24),
-
-                                // Direct Access Button
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: FilledButton.icon(
-                                    onPressed: _navigateToHome,
-                                    icon: const Icon(Icons.login_rounded),
-                                    label: const Text(
-                                      'Enter App',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    style: FilledButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 16,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ] else if (_securityStatus?.hasAnyAuthMethod ==
-                                  true) ...[
-                                // Device Has Lock - Simple Authentication
+                              // Security Status Info
+                              if (_deviceSecurityStatus?.hasDeviceLock ==
+                                  false) ...[
                                 Container(
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
@@ -329,7 +278,7 @@ class _AuthScreenState extends State<AuthScreen>
                                   child: Row(
                                     children: [
                                       Icon(
-                                        Icons.security_rounded,
+                                        Icons.info_outline,
                                         color: colorScheme.primary,
                                         size: 24,
                                       ),
@@ -340,14 +289,14 @@ class _AuthScreenState extends State<AuthScreen>
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              'Device Security',
+                                              'No Device Security',
                                               style: theme.textTheme.titleSmall
                                                   ?.copyWith(
                                                     fontWeight: FontWeight.w600,
                                                   ),
                                             ),
                                             Text(
-                                              'Use your device lock to authenticate',
+                                              'Click the button below to enter the app',
                                               style: theme.textTheme.bodySmall
                                                   ?.copyWith(
                                                     color: colorScheme.onSurface
@@ -361,86 +310,99 @@ class _AuthScreenState extends State<AuthScreen>
                                   ),
                                 ),
                                 const SizedBox(height: 32),
-
-                                // Unlock Button
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: FilledButton.icon(
-                                    onPressed: _isAuthenticating
-                                        ? null
-                                        : _authenticate,
-                                    icon: _isAuthenticating
-                                        ? SizedBox(
-                                            width: 20,
-                                            height: 20,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              valueColor:
-                                                  AlwaysStoppedAnimation<Color>(
-                                                    colorScheme.onPrimary,
-                                                  ),
-                                            ),
-                                          )
-                                        : const Icon(Icons.lock_open_rounded),
-                                    label: Text(
-                                      _isAuthenticating
-                                          ? 'Authenticating...'
-                                          : 'Unlock Vault',
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    style: FilledButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 16,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ] else ...[
-                                // Error: No auth methods available
+                              ] else if (_biometricCapability.isAvailable) ...[
                                 Container(
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
-                                    color: colorScheme.errorContainer,
+                                    color: colorScheme.surfaceVariant
+                                        .withOpacity(0.5),
                                     borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: colorScheme.outline.withOpacity(
+                                        0.2,
+                                      ),
+                                    ),
                                   ),
-                                  child: Column(
+                                  child: Row(
                                     children: [
                                       Icon(
-                                        Icons.error_outline_rounded,
-                                        color: colorScheme.onErrorContainer,
-                                        size: 32,
+                                        _getBiometricIcon(),
+                                        color: colorScheme.primary,
+                                        size: 24,
                                       ),
-                                      const SizedBox(height: 12),
-                                      Text(
-                                        'Authentication Error',
-                                        style: theme.textTheme.titleMedium
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.w600,
-                                              color:
-                                                  colorScheme.onErrorContainer,
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              _biometricCapability.displayName,
+                                              style: theme.textTheme.titleSmall
+                                                  ?.copyWith(
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
                                             ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        'Unable to detect any authentication methods. Please check your device settings.',
-                                        style: theme.textTheme.bodySmall
-                                            ?.copyWith(
-                                              color: colorScheme
-                                                  .onErrorContainer
-                                                  .withOpacity(0.8),
+                                            Text(
+                                              'Touch sensor or use device passcode',
+                                              style: theme.textTheme.bodySmall
+                                                  ?.copyWith(
+                                                    color: colorScheme.onSurface
+                                                        .withOpacity(0.6),
+                                                  ),
                                             ),
-                                        textAlign: TextAlign.center,
+                                          ],
+                                        ),
                                       ),
                                     ],
                                   ),
                                 ),
+                                const SizedBox(height: 32),
                               ],
+
+                              // Unlock Button
+                              SizedBox(
+                                width: double.infinity,
+                                child: FilledButton.icon(
+                                  onPressed: _isAuthenticating
+                                      ? null
+                                      : _authenticate,
+                                  icon: _isAuthenticating
+                                      ? SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                  colorScheme.onPrimary,
+                                                ),
+                                          ),
+                                        )
+                                      : Icon(_getUnlockIcon()),
+                                  label: Text(
+                                    _isAuthenticating
+                                        ? 'Authenticating...'
+                                        : _deviceSecurityStatus
+                                                  ?.hasDeviceLock ==
+                                              false
+                                        ? 'Enter App'
+                                        : 'Unlock Vault',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  style: FilledButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                              ),
 
                               // Error Message
                               if (_errorMessage != null) ...[
@@ -556,5 +518,28 @@ class _AuthScreenState extends State<AuthScreen>
         ),
       ),
     );
+  }
+
+  IconData _getBiometricIcon() {
+    switch (_biometricCapability) {
+      case BiometricCapability.faceId:
+        return Icons.face_rounded;
+      case BiometricCapability.fingerprint:
+        return Icons.fingerprint_rounded;
+      case BiometricCapability.iris:
+        return Icons.visibility_rounded;
+      default:
+        return Icons.security_rounded;
+    }
+  }
+
+  IconData _getUnlockIcon() {
+    if (_deviceSecurityStatus?.hasDeviceLock == false) {
+      return Icons.login_rounded;
+    }
+    if (_biometricCapability.isAvailable) {
+      return _getBiometricIcon();
+    }
+    return Icons.lock_open_rounded;
   }
 }

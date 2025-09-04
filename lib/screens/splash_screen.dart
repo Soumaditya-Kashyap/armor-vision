@@ -4,6 +4,7 @@ import '../services/simple_database_service.dart';
 import '../services/encryption_service.dart';
 import '../utils/constants.dart';
 import 'auth/auth_screen.dart';
+import 'home/home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -34,19 +35,21 @@ class _SplashScreenState extends State<SplashScreen>
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
-      ),
-    );
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+    ));
 
-    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: const Interval(0.2, 0.8, curve: Curves.elasticOut),
-      ),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 0.8,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: const Interval(0.2, 0.8, curve: Curves.elasticOut),
+    ));
 
     _animationController.forward();
   }
@@ -87,9 +90,7 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _initializeWithStatus(
-    String status,
-    Future<void> Function() task,
-  ) async {
+      String status, Future<void> Function() task) async {
     setState(() {
       _statusText = status;
     });
@@ -99,8 +100,9 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> _navigateToNextScreen() async {
     if (!mounted) return;
 
-    // Always require authentication on app startup for security
-    // This ensures users must authenticate every time they open the app
+    // Check if user needs authentication
+    final authService = AuthService();
+    final needsAuth = authService.requiresAuthentication();
 
     // Small delay for smooth transition
     await Future.delayed(const Duration(milliseconds: 300));
@@ -109,10 +111,13 @@ class _SplashScreenState extends State<SplashScreen>
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) {
-            return const AuthScreen(); // Always go to auth screen first
+            return needsAuth ? const AuthScreen() : const HomeScreen();
           },
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(opacity: animation, child: child);
+            return FadeTransition(
+              opacity: animation,
+              child: child,
+            );
           },
           transitionDuration: const Duration(milliseconds: 500),
         ),
@@ -170,9 +175,8 @@ class _SplashScreenState extends State<SplashScreen>
                                   borderRadius: BorderRadius.circular(30),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: colorScheme.primary.withOpacity(
-                                        0.3,
-                                      ),
+                                      color:
+                                          colorScheme.primary.withOpacity(0.3),
                                       blurRadius: 20,
                                       offset: const Offset(0, 10),
                                     ),
@@ -252,9 +256,8 @@ class _SplashScreenState extends State<SplashScreen>
 
                               // Error Text
                               Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 32,
-                                ),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 32),
                                 child: Text(
                                   _statusText,
                                   style: theme.textTheme.bodyMedium?.copyWith(

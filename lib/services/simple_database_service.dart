@@ -1,6 +1,7 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/password_entry.dart';
 import '../models/app_settings.dart';
+import '../utils/armor_themes.dart';
 import 'encryption_service.dart';
 
 class DatabaseService {
@@ -29,41 +30,13 @@ class DatabaseService {
       await Hive.initFlutter();
 
       // Register adapters
-      if (!Hive.isAdapterRegistered(0)) {
-        Hive.registerAdapter(PasswordEntryAdapter());
-      }
-      if (!Hive.isAdapterRegistered(1)) {
-        Hive.registerAdapter(CustomFieldAdapter());
-      }
-      if (!Hive.isAdapterRegistered(2)) {
-        Hive.registerAdapter(FieldTypeAdapter());
-      }
-      if (!Hive.isAdapterRegistered(3)) {
-        Hive.registerAdapter(EntryColorAdapter());
-      }
-      if (!Hive.isAdapterRegistered(4)) {
-        Hive.registerAdapter(CategoryAdapter());
-      }
-      if (!Hive.isAdapterRegistered(5)) {
-        Hive.registerAdapter(AppSettingsAdapter());
-      }
-      if (!Hive.isAdapterRegistered(6)) {
-        Hive.registerAdapter(SortOptionAdapter());
-      }
-      if (!Hive.isAdapterRegistered(7)) {
-        Hive.registerAdapter(ViewModeAdapter());
-      }
-      if (!Hive.isAdapterRegistered(8)) {
-        Hive.registerAdapter(SecurityLevelAdapter());
-      }
+      await _registerAdapters();
 
       // Initialize encryption service
       await _encryptionService.initialize();
 
-      // Open boxes
-      _entriesBox = await Hive.openBox<PasswordEntry>(_entriesBoxName);
-      _settingsBox = await Hive.openBox<AppSettings>(_settingsBoxName);
-      _categoriesBox = await Hive.openBox<Category>(_categoriesBoxName);
+      // Open boxes with error handling for schema changes
+      await _openBoxesSafely();
 
       // Initialize default data
       await _initializeDefaults();
@@ -71,6 +44,74 @@ class DatabaseService {
       _isInitialized = true;
     } catch (e) {
       throw Exception('Failed to initialize database: $e');
+    }
+  }
+
+  /// Register all Hive adapters
+  Future<void> _registerAdapters() async {
+    if (!Hive.isAdapterRegistered(0)) {
+      Hive.registerAdapter(PasswordEntryAdapter());
+    }
+    if (!Hive.isAdapterRegistered(1)) {
+      Hive.registerAdapter(CustomFieldAdapter());
+    }
+    if (!Hive.isAdapterRegistered(2)) {
+      Hive.registerAdapter(FieldTypeAdapter());
+    }
+    if (!Hive.isAdapterRegistered(3)) {
+      Hive.registerAdapter(EntryColorAdapter());
+    }
+    if (!Hive.isAdapterRegistered(4)) {
+      Hive.registerAdapter(CategoryAdapter());
+    }
+    if (!Hive.isAdapterRegistered(5)) {
+      Hive.registerAdapter(AppSettingsAdapter());
+    }
+    if (!Hive.isAdapterRegistered(6)) {
+      Hive.registerAdapter(SortOptionAdapter());
+    }
+    if (!Hive.isAdapterRegistered(7)) {
+      Hive.registerAdapter(ViewModeAdapter());
+    }
+    if (!Hive.isAdapterRegistered(8)) {
+      Hive.registerAdapter(SecurityLevelAdapter());
+    }
+    if (!Hive.isAdapterRegistered(9)) {
+      Hive.registerAdapter(ArmorThemeModeAdapter());
+    }
+  }
+
+  /// Open boxes with migration handling
+  Future<void> _openBoxesSafely() async {
+    try {
+      _entriesBox = await Hive.openBox<PasswordEntry>(_entriesBoxName);
+      _settingsBox = await Hive.openBox<AppSettings>(_settingsBoxName);
+      _categoriesBox = await Hive.openBox<Category>(_categoriesBoxName);
+    } catch (e) {
+      // If opening fails due to schema changes, try to recover
+      print('Box opening failed, attempting recovery: $e');
+
+      try {
+        // Close any partially opened boxes
+        await Hive.close();
+
+        // Delete corrupted boxes (this will lose data but prevent crashes)
+        await Hive.deleteBoxFromDisk(_entriesBoxName);
+        await Hive.deleteBoxFromDisk(_settingsBoxName);
+        await Hive.deleteBoxFromDisk(_categoriesBoxName);
+
+        // Re-register adapters
+        await _registerAdapters();
+
+        // Try opening again
+        _entriesBox = await Hive.openBox<PasswordEntry>(_entriesBoxName);
+        _settingsBox = await Hive.openBox<AppSettings>(_settingsBoxName);
+        _categoriesBox = await Hive.openBox<Category>(_categoriesBoxName);
+
+        print('Database recovery successful');
+      } catch (recoveryError) {
+        throw Exception('Database recovery failed: $recoveryError');
+      }
     }
   }
 
