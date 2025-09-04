@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../home/home_screen.dart';
 
-class AuthScreen extends StatefulWidget {
-  const AuthScreen({super.key});
+class SimpleAuthScreen extends StatefulWidget {
+  const SimpleAuthScreen({super.key});
 
   @override
-  State<AuthScreen> createState() => _AuthScreenState();
+  State<SimpleAuthScreen> createState() => _SimpleAuthScreenState();
 }
 
-class _AuthScreenState extends State<AuthScreen>
+class _SimpleAuthScreenState extends State<SimpleAuthScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;

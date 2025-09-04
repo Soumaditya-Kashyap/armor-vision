@@ -1,5 +1,6 @@
 import 'package:local_auth/local_auth.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import 'dart:math';
@@ -11,9 +12,7 @@ class AuthService {
   static const String _lastAuthKey = 'last_auth_time';
 
   static const _secureStorage = FlutterSecureStorage(
-    aOptions: AndroidOptions(
-      encryptedSharedPreferences: true,
-    ),
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
     iOptions: IOSOptions(
       accessibility: KeychainAccessibility.first_unlock_this_device,
     ),
@@ -38,46 +37,115 @@ class AuthService {
   /// Initialize authentication service
   Future<void> initialize() async {
     try {
+      // Reset authentication state for fresh app start
+      _isAuthenticated = false;
+      _currentSessionToken = null;
+      _lastSuccessfulAuth = null;
+
       await _loadAuthConfig();
-      await _validateSession();
+      // Don't validate session on init - always require fresh authentication
     } catch (e) {
       print('Auth service initialization warning: $e');
     }
   }
 
-  /// Check if biometric authentication is available
-  Future<BiometricCapability> getBiometricCapability() async {
+  /// Check device security capabilities (without triggering authentication)
+  Future<DeviceSecurityStatus> getDeviceSecurityStatus() async {
     try {
-      final bool isAvailable = await _localAuth.canCheckBiometrics;
       final bool isDeviceSupported = await _localAuth.isDeviceSupported();
 
-      if (!isAvailable || !isDeviceSupported) {
-        return BiometricCapability.notAvailable;
+      if (!isDeviceSupported) {
+        return DeviceSecurityStatus(
+          hasDeviceLock: false,
+          biometricCapability: BiometricCapability.notAvailable,
+          availableAuthMethods: [],
+        );
       }
 
-      final List<BiometricType> availableBiometrics =
-          await _localAuth.getAvailableBiometrics();
+      // Check device capabilities without triggering authentication
+      bool hasDeviceLock = false;
+      List<AuthMethod> availableAuthMethods = [];
+      BiometricCapability biometricCapability =
+          BiometricCapability.notAvailable;
 
-      if (availableBiometrics.isEmpty) {
-        return BiometricCapability.notEnrolled;
+      try {
+        // Check if device can use biometrics (which implies device lock exists)
+        final bool canCheckBiometrics = await _localAuth.canCheckBiometrics;
+        final List<BiometricType> availableBiometrics = await _localAuth
+            .getAvailableBiometrics();
+
+        // If device supports any authentication, it has a lock
+        if (canCheckBiometrics || availableBiometrics.isNotEmpty) {
+          hasDeviceLock = true;
+          availableAuthMethods.add(AuthMethod.deviceCredentials);
+
+          // Set biometric capability
+          if (availableBiometrics.isNotEmpty) {
+            if (availableBiometrics.contains(BiometricType.fingerprint)) {
+              biometricCapability = BiometricCapability.fingerprint;
+            } else if (availableBiometrics.contains(BiometricType.face)) {
+              biometricCapability = BiometricCapability.faceId;
+            } else {
+              biometricCapability = BiometricCapability.other;
+            }
+          } else if (canCheckBiometrics) {
+            biometricCapability = BiometricCapability.notEnrolled;
+          }
+        } else {
+          // Try one final check - if device is supported but no biometrics,
+          // it might still have PIN/pattern
+          hasDeviceLock = isDeviceSupported;
+          if (hasDeviceLock) {
+            availableAuthMethods.add(AuthMethod.deviceCredentials);
+          }
+        }
+      } catch (e) {
+        // If we get any error, assume device has some form of lock
+        // This is safer than assuming no lock
+        hasDeviceLock = isDeviceSupported;
+        if (hasDeviceLock) {
+          availableAuthMethods.add(AuthMethod.deviceCredentials);
+        }
+        biometricCapability = BiometricCapability.notAvailable;
       }
 
-      // Determine the strongest available biometric
-      if (availableBiometrics.contains(BiometricType.face)) {
-        return BiometricCapability.faceId;
-      } else if (availableBiometrics.contains(BiometricType.fingerprint)) {
-        return BiometricCapability.fingerprint;
-      } else if (availableBiometrics.contains(BiometricType.iris)) {
-        return BiometricCapability.iris;
-      } else {
-        return BiometricCapability.other;
-      }
+      return DeviceSecurityStatus(
+        hasDeviceLock: hasDeviceLock,
+        biometricCapability: biometricCapability,
+        availableAuthMethods: availableAuthMethods,
+      );
     } catch (e) {
-      return BiometricCapability.error;
+      // In case of complete failure, assume device has lock to be safe
+      return DeviceSecurityStatus(
+        hasDeviceLock: true,
+        biometricCapability: BiometricCapability.error,
+        availableAuthMethods: [AuthMethod.deviceCredentials],
+      );
     }
   }
 
-  /// Authenticate user with biometrics or device credentials
+  /// Check if biometric authentication is available (backwards compatibility)
+  Future<BiometricCapability> getBiometricCapability() async {
+    final status = await getDeviceSecurityStatus();
+    return status.biometricCapability;
+  }
+
+  /// Authenticate with specific method (simplified)
+  Future<AuthResult> authenticateWithMethod({
+    required AuthMethod method,
+    String? reason,
+    bool stickyAuth = true,
+  }) async {
+    // For simplicity, all methods now use the same approach as device credentials
+    // This mimics Google Pay's behavior - use whatever the device has configured
+    return authenticate(
+      reason: reason,
+      allowDeviceCredentials: true,
+      stickyAuth: stickyAuth,
+    );
+  }
+
+  /// Authenticate user with device lock (like Google Pay)
   Future<AuthResult> authenticate({
     String? reason,
     bool allowDeviceCredentials = true,
@@ -89,17 +157,89 @@ class AuthService {
         return AuthResult.lockedOut(_getRemainingLockoutTime());
       }
 
-      final String authReason =
-          reason ?? 'Please authenticate to access your secure vault';
+      final String authReason = reason ?? 'Use your device security to unlock';
 
-      final bool didAuthenticate = await _localAuth.authenticate(
-        localizedReason: authReason,
-        options: AuthenticationOptions(
-          useErrorDialogs: true,
-          stickyAuth: stickyAuth,
-          biometricOnly: !allowDeviceCredentials,
-        ),
-      );
+      // Check if device supports authentication
+      final bool isDeviceSupported = await _localAuth.isDeviceSupported();
+      if (!isDeviceSupported) {
+        return AuthResult.deviceNotSupported();
+      }
+
+      // Try to authenticate with device credentials
+      bool didAuthenticate = false;
+
+      try {
+        // First, check what authentication methods are available
+        final List<BiometricType> availableBiometrics = await _localAuth
+            .getAvailableBiometrics();
+
+        // If no biometrics are enrolled, this should go straight to device credentials
+        if (availableBiometrics.isEmpty) {
+          // Device has PIN/pattern/password but no biometrics
+          didAuthenticate = await _localAuth.authenticate(
+            localizedReason: authReason,
+            options: const AuthenticationOptions(
+              useErrorDialogs: true,
+              stickyAuth: true,
+              biometricOnly: false, // Allow device credentials
+            ),
+          );
+        } else {
+          // Device has biometrics, but we want to let user choose
+          // This should show both biometric and "Use PIN/Pattern" options
+          didAuthenticate = await _localAuth.authenticate(
+            localizedReason: authReason,
+            options: const AuthenticationOptions(
+              useErrorDialogs: true,
+              stickyAuth: true,
+              biometricOnly: false, // Allow fallback to device credentials
+            ),
+          );
+        }
+      } on PlatformException catch (e) {
+        print('Authentication PlatformException: ${e.code} - ${e.message}');
+
+        // Handle specific error cases
+        switch (e.code) {
+          case 'UserCancel':
+            return AuthResult.userCancelled();
+          case 'PasscodeNotSet':
+            return AuthResult.passcodeNotSet();
+          case 'NotAvailable':
+            return AuthResult.notAvailable();
+          case 'NotEnrolled':
+            return AuthResult.notEnrolled();
+          case 'LockedOut':
+          case 'PermanentlyLockedOut':
+            return AuthResult.lockedOut(const Duration(minutes: 1));
+          case 'BiometricOnlyNotSupported':
+            // Don't treat this as an error - try again with device credentials
+            try {
+              didAuthenticate = await _localAuth.authenticate(
+                localizedReason: authReason,
+                options: const AuthenticationOptions(
+                  useErrorDialogs: true,
+                  stickyAuth: true,
+                  biometricOnly: false,
+                ),
+              );
+              if (didAuthenticate) {
+                await _handleSuccessfulAuth();
+                return AuthResult.success();
+              } else {
+                return AuthResult.userCancelled();
+              }
+            } catch (e2) {
+              return AuthResult.error('Authentication failed: $e2');
+            }
+          default:
+            // For other errors, don't increment failed attempts if it's a system issue
+            if (e.code != 'SystemCancel' && e.code != 'AppCancel') {
+              _handleFailedAuth();
+            }
+            return AuthResult.error('Authentication failed: ${e.message}');
+        }
+      }
 
       if (didAuthenticate) {
         await _handleSuccessfulAuth();
@@ -108,9 +248,8 @@ class AuthService {
         _handleFailedAuth();
         return AuthResult.userCancelled();
       }
-    } on PlatformException catch (e) {
-      return _handlePlatformException(e);
     } catch (e) {
+      print('Authentication general error: $e');
       _handleFailedAuth();
       return AuthResult.error('Authentication failed: $e');
     }
@@ -223,7 +362,9 @@ class AuthService {
 
     await _saveAuthConfig();
     await _secureStorage.write(
-        key: _sessionTokenKey, value: _currentSessionToken!);
+      key: _sessionTokenKey,
+      value: _currentSessionToken!,
+    );
     await _secureStorage.write(
       key: _lastAuthKey,
       value: _lastSuccessfulAuth!.millisecondsSinceEpoch.toString(),
@@ -280,28 +421,6 @@ class AuthService {
     return remaining.isNegative ? Duration.zero : remaining;
   }
 
-  /// Validate current session
-  Future<void> _validateSession() async {
-    try {
-      final sessionToken = await _secureStorage.read(key: _sessionTokenKey);
-      final lastAuthString = await _secureStorage.read(key: _lastAuthKey);
-
-      if (sessionToken != null && lastAuthString != null) {
-        _currentSessionToken = sessionToken;
-        _lastSuccessfulAuth =
-            DateTime.fromMillisecondsSinceEpoch(int.parse(lastAuthString));
-
-        if (_isSessionValid()) {
-          _isAuthenticated = true;
-        } else {
-          await logout();
-        }
-      }
-    } catch (e) {
-      await logout();
-    }
-  }
-
   /// Check if session is still valid
   bool _isSessionValid() {
     if (_lastSuccessfulAuth == null) return false;
@@ -337,7 +456,8 @@ class AuthService {
 
         if (config['lockoutUntil'] != null) {
           _lockoutUntil = DateTime.fromMillisecondsSinceEpoch(
-              config['lockoutUntil'] as int);
+            config['lockoutUntil'] as int,
+          );
         }
       }
     } catch (e) {
@@ -366,40 +486,6 @@ class AuthService {
     }
   }
 
-  /// Handle platform-specific authentication exceptions
-  AuthResult _handlePlatformException(PlatformException e) {
-    switch (e.code) {
-      case 'NotAvailable':
-        return AuthResult.notAvailable();
-      case 'NotEnrolled':
-        return AuthResult.notEnrolled();
-      case 'PasscodeNotSet':
-        return AuthResult.passcodeNotSet();
-      case 'UserCancel':
-        return AuthResult.userCancelled();
-      case 'UserFallback':
-        return AuthResult.userFallback();
-      case 'BiometricOnlyNotSupported':
-        return AuthResult.biometricOnlyNotSupported();
-      case 'DeviceNotSupported':
-        return AuthResult.deviceNotSupported();
-      case 'ApplicationLock':
-        return AuthResult.applicationLock();
-      case 'InvalidContext':
-        return AuthResult.invalidContext();
-      case 'NotInteractive':
-        return AuthResult.notInteractive();
-      default:
-        _handleFailedAuth();
-        // Check for FragmentActivity error specifically
-        if (e.message?.contains('FragmentActivity') == true) {
-          return AuthResult.error(
-              'Biometric authentication is temporarily unavailable. Please use device passcode.');
-        }
-        return AuthResult.error('Platform error: ${e.message}');
-    }
-  }
-
   // Getters
   bool get isAuthenticated => _isAuthenticated;
   int get failedAttempts => _failedAttempts;
@@ -420,6 +506,24 @@ enum BiometricCapability {
   error,
 }
 
+enum AuthMethod { deviceCredentials, fingerprint, faceId, iris, biometric }
+
+class DeviceSecurityStatus {
+  final bool hasDeviceLock;
+  final BiometricCapability biometricCapability;
+  final List<AuthMethod> availableAuthMethods;
+
+  DeviceSecurityStatus({
+    required this.hasDeviceLock,
+    required this.biometricCapability,
+    required this.availableAuthMethods,
+  });
+
+  bool get hasAnyAuthMethod => availableAuthMethods.isNotEmpty;
+  bool get hasBiometrics => biometricCapability.isAvailable;
+  bool get requiresDeviceSetup => !hasDeviceLock;
+}
+
 class AuthResult {
   final bool success;
   final AuthError? error;
@@ -430,32 +534,77 @@ class AuthResult {
 
   factory AuthResult.success() => AuthResult._(true, null, null, null);
   factory AuthResult.userCancelled() => AuthResult._(
-      false, AuthError.userCancelled, 'User cancelled authentication', null);
+    false,
+    AuthError.userCancelled,
+    'User cancelled authentication',
+    null,
+  );
   factory AuthResult.wrongCredentials() => AuthResult._(
-      false, AuthError.wrongCredentials, 'Wrong credentials provided', null);
+    false,
+    AuthError.wrongCredentials,
+    'Wrong credentials provided',
+    null,
+  );
   factory AuthResult.lockedOut(Duration duration) => AuthResult._(
-      false, AuthError.lockedOut, 'Account temporarily locked', duration);
-  factory AuthResult.notAvailable() => AuthResult._(false,
-      AuthError.notAvailable, 'Biometric authentication not available', null);
+    false,
+    AuthError.lockedOut,
+    'Account temporarily locked',
+    duration,
+  );
+  factory AuthResult.notAvailable() => AuthResult._(
+    false,
+    AuthError.notAvailable,
+    'Biometric authentication not available',
+    null,
+  );
   factory AuthResult.notEnrolled() => AuthResult._(
-      false, AuthError.notEnrolled, 'No biometrics enrolled', null);
+    false,
+    AuthError.notEnrolled,
+    'No biometrics enrolled',
+    null,
+  );
   factory AuthResult.passcodeNotSet() => AuthResult._(
-      false, AuthError.passcodeNotSet, 'Device passcode not set', null);
+    false,
+    AuthError.passcodeNotSet,
+    'Device passcode not set',
+    null,
+  );
   factory AuthResult.userFallback() => AuthResult._(
-      false, AuthError.userFallback, 'User chose fallback method', null);
+    false,
+    AuthError.userFallback,
+    'User chose fallback method',
+    null,
+  );
   factory AuthResult.biometricOnlyNotSupported() => AuthResult._(
-      false,
-      AuthError.biometricOnlyNotSupported,
-      'Biometric-only mode not supported',
-      null);
+    false,
+    AuthError.biometricOnlyNotSupported,
+    'Biometric-only mode not supported',
+    null,
+  );
   factory AuthResult.deviceNotSupported() => AuthResult._(
-      false, AuthError.deviceNotSupported, 'Device not supported', null);
+    false,
+    AuthError.deviceNotSupported,
+    'Device not supported',
+    null,
+  );
   factory AuthResult.applicationLock() => AuthResult._(
-      false, AuthError.applicationLock, 'Application is locked', null);
+    false,
+    AuthError.applicationLock,
+    'Application is locked',
+    null,
+  );
   factory AuthResult.invalidContext() => AuthResult._(
-      false, AuthError.invalidContext, 'Invalid authentication context', null);
+    false,
+    AuthError.invalidContext,
+    'Invalid authentication context',
+    null,
+  );
   factory AuthResult.notInteractive() => AuthResult._(
-      false, AuthError.notInteractive, 'Authentication not interactive', null);
+    false,
+    AuthError.notInteractive,
+    'Authentication not interactive',
+    null,
+  );
   factory AuthResult.error(String message) =>
       AuthResult._(false, AuthError.unknown, message, null);
 }
@@ -522,4 +671,51 @@ extension BiometricCapabilityExtension on BiometricCapability {
       this != BiometricCapability.notAvailable &&
       this != BiometricCapability.notEnrolled &&
       this != BiometricCapability.error;
+}
+
+extension AuthMethodExtension on AuthMethod {
+  String get displayName {
+    switch (this) {
+      case AuthMethod.deviceCredentials:
+        return 'Device Lock';
+      case AuthMethod.fingerprint:
+        return 'Fingerprint';
+      case AuthMethod.faceId:
+        return 'Face ID';
+      case AuthMethod.iris:
+        return 'Iris Scan';
+      case AuthMethod.biometric:
+        return 'Biometric';
+    }
+  }
+
+  String get description {
+    switch (this) {
+      case AuthMethod.deviceCredentials:
+        return 'Use your device PIN, pattern, or password';
+      case AuthMethod.fingerprint:
+        return 'Touch the fingerprint sensor';
+      case AuthMethod.faceId:
+        return 'Look at your device to unlock';
+      case AuthMethod.iris:
+        return 'Iris scan authentication';
+      case AuthMethod.biometric:
+        return 'Use biometric authentication';
+    }
+  }
+
+  IconData get icon {
+    switch (this) {
+      case AuthMethod.deviceCredentials:
+        return Icons.lock_rounded;
+      case AuthMethod.fingerprint:
+        return Icons.fingerprint_rounded;
+      case AuthMethod.faceId:
+        return Icons.face_rounded;
+      case AuthMethod.iris:
+        return Icons.visibility_rounded;
+      case AuthMethod.biometric:
+        return Icons.security_rounded;
+    }
+  }
 }
