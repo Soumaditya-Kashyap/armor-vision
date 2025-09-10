@@ -3,8 +3,15 @@ import 'package:provider/provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../utils/armor_themes.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  bool _isThemeExpanded = false;
 
   Future<void> _updateTheme(
     BuildContext context,
@@ -126,39 +133,199 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Widget _buildThemeSelector(ColorScheme colorScheme, BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceVariant.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Theme',
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return Container(
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceVariant.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Choose your preferred app theme',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: colorScheme.onSurface.withOpacity(0.7),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header with current theme display
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    _isThemeExpanded = !_isThemeExpanded;
+                  });
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            'Theme',
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                          const Spacer(),
+                          AnimatedRotation(
+                            duration: const Duration(milliseconds: 400),
+                            curve: Curves.easeInOutCubic,
+                            turns: _isThemeExpanded ? 0.5 : 0,
+                            child: Icon(
+                              Icons.expand_more_rounded,
+                              color: colorScheme.onSurface.withOpacity(0.7),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Choose your preferred app theme',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurface.withOpacity(0.7),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      // Current theme display
+                      _buildCurrentThemeDisplay(
+                        themeProvider.currentThemeMode,
+                        colorScheme,
+                        context,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Expandable theme options
+              AnimatedSize(
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeInOutCubic,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 350),
+                  opacity: _isThemeExpanded ? 1.0 : 0.0,
+                  child: _isThemeExpanded
+                      ? AnimatedSlide(
+                          duration: const Duration(milliseconds: 400),
+                          curve: Curves.easeOutCubic,
+                          offset: _isThemeExpanded
+                              ? Offset.zero
+                              : const Offset(0, -0.1),
+                          child: _buildThemeOptions(
+                            colorScheme,
+                            context,
+                            themeProvider,
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildCurrentThemeDisplay(
+    ArmorThemeMode currentTheme,
+    ColorScheme colorScheme,
+    BuildContext context,
+  ) {
+    final themeColor = ArmorThemes.getThemePreviewColor(currentTheme);
+    final backgroundColor = ArmorThemes.getThemeBackgroundColor(currentTheme);
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: themeColor, width: 1.5),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: themeColor.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Icon(
+              ArmorThemes.getThemeIcon(currentTheme),
+              color: themeColor,
+              size: 14,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  ArmorThemes.getThemeDisplayName(currentTheme),
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: _getTextColorForTheme(currentTheme),
+                  ),
+                ),
+                Text(
+                  ArmorThemes.getThemeDescription(currentTheme),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: _getSubtextColorForTheme(currentTheme),
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.check_circle_rounded, color: themeColor, size: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildThemeOptions(
+    ColorScheme colorScheme,
+    BuildContext context,
+    ThemeProvider themeProvider,
+  ) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Column(
+        children: [
+          Container(
+            height: 1,
+            margin: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              color: colorScheme.outline.withOpacity(0.2),
+            ),
+          ),
           GridView.count(
             crossAxisCount: 2,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1.1,
-            children: ArmorThemeMode.values.map((mode) {
-              return _buildThemeCard(mode, colorScheme, context);
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+            childAspectRatio: 2.5,
+            children: ArmorThemeMode.values.asMap().entries.map((entry) {
+              final index = entry.key;
+              final mode = entry.value;
+
+              return AnimatedOpacity(
+                duration: Duration(milliseconds: 300 + (index * 50)),
+                curve: Curves.easeOutCubic,
+                opacity: _isThemeExpanded ? 1.0 : 0.0,
+                child: AnimatedScale(
+                  duration: Duration(milliseconds: 350 + (index * 75)),
+                  curve: Curves.easeOutBack,
+                  scale: _isThemeExpanded ? 1.0 : 0.8,
+                  child: _buildCompactThemeCard(
+                    mode,
+                    colorScheme,
+                    context,
+                    themeProvider,
+                  ),
+                ),
+              );
             }).toList(),
           ),
         ],
@@ -166,101 +333,87 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildThemeCard(
+  Widget _buildCompactThemeCard(
     ArmorThemeMode mode,
     ColorScheme colorScheme,
     BuildContext context,
+    ThemeProvider themeProvider,
   ) {
-    return Consumer<ThemeProvider>(
-      builder: (context, themeProvider, child) {
-        final isSelected = themeProvider.currentThemeMode == mode;
-        final themeColor = ArmorThemes.getThemePreviewColor(mode);
-        final backgroundColor = ArmorThemes.getThemeBackgroundColor(mode);
+    final isSelected = themeProvider.currentThemeMode == mode;
+    final themeColor = ArmorThemes.getThemePreviewColor(mode);
+    final backgroundColor = ArmorThemes.getThemeBackgroundColor(mode);
 
-        return GestureDetector(
-          onTap: () => _updateTheme(context, mode),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            decoration: BoxDecoration(
-              color: backgroundColor,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected
-                    ? themeColor
-                    : colorScheme.outline.withOpacity(0.3),
-                width: isSelected ? 2.5 : 1,
-              ),
-              boxShadow: [
-                if (isSelected)
-                  BoxShadow(
-                    color: themeColor.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 150),
+      tween: Tween(begin: 1.0, end: 1.0),
+      builder: (context, scale, child) {
+        return Transform.scale(
+          scale: scale,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _updateTheme(context, mode),
+              borderRadius: BorderRadius.circular(8),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                decoration: BoxDecoration(
+                  color: backgroundColor,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: isSelected
+                        ? themeColor
+                        : colorScheme.outline.withOpacity(0.3),
+                    width: isSelected ? 1.5 : 1,
                   ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Theme Icon
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: themeColor.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      ArmorThemes.getThemeIcon(mode),
-                      color: themeColor,
-                      size: 18,
-                    ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: themeColor.withOpacity(0.2),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 6,
                   ),
-                  const SizedBox(height: 8),
-                  // Theme Name
-                  Text(
-                    ArmorThemes.getThemeDisplayName(mode),
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: mode == ArmorThemeMode.light
-                          ? Colors.black87
-                          : Colors.white,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 2),
-                  // Theme Description
-                  Text(
-                    ArmorThemes.getThemeDescription(mode),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: (mode == ArmorThemeMode.light
-                          ? Colors.black54
-                          : Colors.white70),
-                      fontSize: 10,
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  // Selection Indicator
-                  if (isSelected)
-                    Container(
-                      width: 20,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        color: themeColor,
-                        shape: BoxShape.circle,
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          color: themeColor.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Icon(
+                          ArmorThemes.getThemeIcon(mode),
+                          color: themeColor,
+                          size: 12,
+                        ),
                       ),
-                      child: const Icon(
-                        Icons.check_rounded,
-                        color: Colors.white,
-                        size: 12,
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          ArmorThemes.getThemeDisplayName(mode),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.w500,
+                                color: _getTextColorForTheme(mode),
+                                fontSize: 12,
+                              ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                ],
+                      if (isSelected)
+                        Icon(Icons.check_rounded, color: themeColor, size: 14),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -303,5 +456,31 @@ class SettingsScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Color _getTextColorForTheme(ArmorThemeMode mode) {
+    switch (mode) {
+      case ArmorThemeMode.light:
+        return Colors.grey.shade800; // Dark gray for better contrast on light
+      case ArmorThemeMode.system:
+        return Colors.grey.shade700; // Medium gray for system
+      case ArmorThemeMode.dark:
+        return Colors.white;
+      case ArmorThemeMode.armor:
+        return Colors.white;
+    }
+  }
+
+  Color _getSubtextColorForTheme(ArmorThemeMode mode) {
+    switch (mode) {
+      case ArmorThemeMode.light:
+        return Colors.grey.shade600; // Medium gray for subtext on light
+      case ArmorThemeMode.system:
+        return Colors.grey.shade500; // Lighter gray for system subtext
+      case ArmorThemeMode.dark:
+        return Colors.white70;
+      case ArmorThemeMode.armor:
+        return Colors.white70;
+    }
   }
 }

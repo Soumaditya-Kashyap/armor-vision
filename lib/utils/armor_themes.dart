@@ -286,11 +286,11 @@ class ArmorThemes {
   static Color getThemePreviewColor(ArmorThemeMode mode) {
     switch (mode) {
       case ArmorThemeMode.light:
-        return const Color(0xFF1976D2);
+        return const Color(0xFF1976D2); // Blue
       case ArmorThemeMode.dark:
-        return const Color(0xFF1976D2);
+        return const Color(0xFF90CAF9); // Light blue for dark theme
       case ArmorThemeMode.system:
-        return Colors.grey;
+        return const Color(0xFF757575); // Darker gray for better contrast
       case ArmorThemeMode.armor:
         return const Color(0xFF00FFFF); // Pure cyan for Aurora
     }
@@ -299,11 +299,11 @@ class ArmorThemes {
   static Color getThemeBackgroundColor(ArmorThemeMode mode) {
     switch (mode) {
       case ArmorThemeMode.light:
-        return Colors.white;
+        return const Color(0xFFFAFAFA); // Very light gray for better contrast
       case ArmorThemeMode.dark:
         return const Color(0xFF121212);
       case ArmorThemeMode.system:
-        return Colors.grey[300]!;
+        return const Color(0xFFE8E8E8); // Light gray with better contrast
       case ArmorThemeMode.armor:
         return const Color(0xFF0B0B1F); // Deep cosmic background
     }
