@@ -310,12 +310,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       return Expanded(
                         child: Padding(
                           padding: EdgeInsets.only(
-                            right: index < ArmorThemeMode.values.length - 1 ? 8 : 0,
+                            right: index < ArmorThemeMode.values.length - 1
+                                ? 8
+                                : 0,
                           ),
                           child: AnimatedContainer(
-                            duration: Duration(milliseconds: 200 + (index * 50)),
+                            duration: Duration(
+                              milliseconds: 200 + (index * 50),
+                            ),
                             curve: Curves.easeOutCubic,
-                            height: 75, // Increased height to prevent overflow
+                            height: 60, // Match the card height
                             child: _buildSquareThemeCard(
                               mode,
                               colorScheme,
@@ -342,10 +346,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   ) {
     final isSelected = themeProvider.currentThemeMode == mode;
     final themeColor = ArmorThemes.getThemePreviewColor(mode);
-    // Make Light and System themes dark
-    final backgroundColor = (mode == ArmorThemeMode.light || mode == ArmorThemeMode.system) 
-        ? const Color(0xFF2A2A2A) 
-        : ArmorThemes.getThemeBackgroundColor(mode);
+    final backgroundColor = ArmorThemes.getThemeBackgroundColor(mode);
 
     return Material(
       color: Colors.transparent,
@@ -354,7 +355,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         borderRadius: BorderRadius.circular(12),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          height: 80, // Square-ish height
+          height: 60, // Compact height
           decoration: BoxDecoration(
             color: backgroundColor,
             borderRadius: BorderRadius.circular(12),
@@ -364,61 +365,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   : colorScheme.outline.withOpacity(0.3),
               width: isSelected ? 2 : 1,
             ),
-            boxShadow: isSelected ? [
-              BoxShadow(
-                color: themeColor.withOpacity(0.3),
-                blurRadius: 6,
-                offset: const Offset(0, 3),
-              ),
-            ] : null,
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: themeColor.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(6),
-            child: ClipRect(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Theme Icon
-                  Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: themeColor.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Icon(
-                      ArmorThemes.getThemeIcon(mode),
-                      color: themeColor,
-                      size: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  // Theme Name
-                  Text(
-                    _getThemeDisplayName(mode),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white, // All text white for consistency
-                      fontSize: 9,
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                const SizedBox(height: 2),
-                // Selection Indicator
-                if (isSelected)
-                  Icon(
-                    Icons.check_circle_rounded,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Properly sized icon
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: themeColor.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Icon(
+                  ArmorThemes.getThemeIcon(mode),
+                  color: themeColor,
+                  size: 16,
+                ),
+              ),
+              const SizedBox(height: 6),
+              // Selection indicator
+              AnimatedOpacity(
+                duration: const Duration(milliseconds: 200),
+                opacity: isSelected ? 1.0 : 0.0,
+                child: Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
                     color: themeColor,
-                    size: 16,
-                  )
-                else
-                  const SizedBox(height: 16), // Maintain height when not selected
-              ],
-            ),
-            ),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
