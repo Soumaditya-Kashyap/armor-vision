@@ -346,7 +346,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   ) {
     final isSelected = themeProvider.currentThemeMode == mode;
     final themeColor = ArmorThemes.getThemePreviewColor(mode);
-    final backgroundColor = ArmorThemes.getThemeBackgroundColor(mode);
+    // Make Light theme use dark background too
+    final backgroundColor = mode == ArmorThemeMode.light
+        ? const Color(0xFF2A2A2A) // Dark background for Light theme
+        : ArmorThemes.getThemeBackgroundColor(mode);
 
     return Material(
       color: Colors.transparent,
