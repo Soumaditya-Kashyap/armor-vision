@@ -35,45 +35,46 @@ class PasswordEntryCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // Header with favorite and color indicator
+              // Header with title and favorite
               Row(
                 children: [
                   // Color indicator
                   Container(
-                    width: 4,
-                    height: 24,
+                    width: 3,
+                    height: 20,
                     decoration: BoxDecoration(
                       color: AppHelpers.getEntryColor(entry.color),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       entry.displayTitle,
-                      style: theme.textTheme.titleMedium?.copyWith(
+                      style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                         color: colorScheme.onSurface,
                       ),
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   // Favorite button
                   InkWell(
                     onTap: onFavoriteToggle,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(16),
                     child: Padding(
-                      padding: const EdgeInsets.all(4),
+                      padding: const EdgeInsets.all(2),
                       child: Icon(
                         entry.isFavorite
                             ? Icons.favorite_rounded
                             : Icons.favorite_border_rounded,
-                        size: 20,
+                        size: 16,
                         color: entry.isFavorite
                             ? Colors.red
                             : colorScheme.onSurface.withOpacity(0.6),
@@ -83,29 +84,29 @@ class PasswordEntryCard extends StatelessWidget {
                 ],
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
 
-              // Description (if available)
+              // Description (only if short)
               if (entry.description != null &&
                   entry.description!.isNotEmpty) ...[
                 Text(
                   entry.description!,
-                  style: theme.textTheme.bodyMedium?.copyWith(
+                  style: theme.textTheme.bodySmall?.copyWith(
                     color: colorScheme.onSurface.withOpacity(0.7),
+                    fontSize: 12,
                   ),
-                  maxLines: 2,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
               ],
 
-              // Field count and category
+              // Field count
               Row(
                 children: [
-                  // Field count
                   Icon(
                     Icons.key_rounded,
-                    size: 16,
+                    size: 14,
                     color: colorScheme.onSurface.withOpacity(0.5),
                   ),
                   const SizedBox(width: 4),
@@ -113,71 +114,52 @@ class PasswordEntryCard extends StatelessWidget {
                     '${entry.customFields.length} ${entry.customFields.length == 1 ? 'field' : 'fields'}',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: colorScheme.onSurface.withOpacity(0.6),
+                      fontSize: 11,
                     ),
                   ),
-
-                  const Spacer(),
-
-                  // Category
-                  if (entry.category != null) ...[
-                    Flexible(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppHelpers.getEntryColor(entry.color)
-                              .withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          entry.category!.toUpperCase(),
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: AppHelpers.getEntryColor(entry.color),
-                            fontWeight: FontWeight.w600,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                      ),
-                    ),
-                  ],
                 ],
               ),
 
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
 
-              // Last modified
+              // Category badge (if available)
+              if (entry.category != null) ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppHelpers.getEntryColor(
+                      entry.color,
+                    ).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    entry.category!.toUpperCase(),
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: AppHelpers.getEntryColor(entry.color),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 9,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
+                const SizedBox(height: 6),
+              ],
+
+              // Bottom section - last modified
+              const Spacer(),
               Text(
                 'Modified ${AppHelpers.formatDate(entry.updatedAt)}',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: colorScheme.onSurface.withOpacity(0.5),
+                  fontSize: 10,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-
-              // Tags (if any)
-              if (entry.tags.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 4,
-                  runSpacing: 4,
-                  children: entry.tags.take(3).map((tag) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: colorScheme.surfaceVariant,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        tag,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ],
             ],
           ),
         ),
@@ -200,8 +182,9 @@ class PasswordEntryCard extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color:
-                      AppHelpers.getEntryColor(entry.color).withOpacity(0.15),
+                  color: AppHelpers.getEntryColor(
+                    entry.color,
+                  ).withOpacity(0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -265,10 +248,13 @@ class PasswordEntryCard extends StatelessWidget {
                           Flexible(
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
-                                color: AppHelpers.getEntryColor(entry.color)
-                                    .withOpacity(0.15),
+                                color: AppHelpers.getEntryColor(
+                                  entry.color,
+                                ).withOpacity(0.15),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(

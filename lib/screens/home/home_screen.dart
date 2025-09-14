@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import '../../models/password_entry.dart';
-import '../../models/app_settings.dart';
 import '../../services/simple_database_service.dart';
 import '../../utils/constants.dart';
 import '../../widgets/password_entry_card.dart';
@@ -22,7 +20,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _searchQuery = '';
   bool _isLoading = true;
-  ViewMode _viewMode = ViewMode.grid;
   int _currentTabIndex = 0;
 
   @override
@@ -120,7 +117,17 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             // App Bar Section
             Container(
-              padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                boxShadow: [
+                  BoxShadow(
+                    color: colorScheme.shadow.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -128,57 +135,91 @@ class _HomeScreenState extends State<HomeScreen> {
                   Row(
                     children: [
                       Expanded(
-                        child: Text(
-                          'Armor',
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.onSurface,
-                          ),
-                          overflow: TextOverflow.ellipsis,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Armor',
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                            Text(
+                              '${_allEntries.length} entries',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurface.withOpacity(0.6),
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      IconButton(
-                        onPressed: () {
-                          setState(() {
-                            _viewMode = _viewMode == ViewMode.grid
-                                ? ViewMode.list
-                                : ViewMode.grid;
-                          });
-                        },
-                        icon: Icon(
-                          _viewMode == ViewMode.grid
-                              ? Icons.view_list_rounded
-                              : Icons.grid_view_rounded,
-                          size: 18,
+                      Container(
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceVariant.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        constraints: const BoxConstraints(
-                          minWidth: 36,
-                          minHeight: 36,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              onPressed: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'More view options coming soon!',
+                                    ),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(
+                                Icons.view_module_rounded,
+                                size: 18,
+                              ),
+                              constraints: const BoxConstraints(
+                                minWidth: 32,
+                                minHeight: 32,
+                              ),
+                              padding: const EdgeInsets.all(4),
+                            ),
+                            Container(
+                              width: 1,
+                              height: 20,
+                              color: colorScheme.outline.withOpacity(0.3),
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                Navigator.of(context).pushNamed('/settings');
+                              },
+                              icon: const Icon(
+                                Icons.settings_rounded,
+                                size: 18,
+                              ),
+                              constraints: const BoxConstraints(
+                                minWidth: 32,
+                                minHeight: 32,
+                              ),
+                              padding: const EdgeInsets.all(4),
+                            ),
+                          ],
                         ),
-                        padding: const EdgeInsets.all(6),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          Navigator.of(context).pushNamed('/settings');
-                        },
-                        icon: const Icon(Icons.settings_rounded, size: 18),
-                        constraints: const BoxConstraints(
-                          minWidth: 36,
-                          minHeight: 36,
-                        ),
-                        padding: const EdgeInsets.all(6),
                       ),
                     ],
                   ),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
 
                   // Search Bar
                   Container(
-                    height: 40,
+                    height: 44,
                     decoration: BoxDecoration(
                       color: colorScheme.surfaceVariant.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: colorScheme.outline.withOpacity(0.2),
+                      ),
                     ),
                     child: TextField(
                       onChanged: (value) {
@@ -187,35 +228,35 @@ class _HomeScreenState extends State<HomeScreen> {
                         });
                       },
                       decoration: InputDecoration(
-                        hintText: 'Search vault...',
+                        hintText: 'Search your vault...',
                         hintStyle: TextStyle(
                           color: colorScheme.onSurfaceVariant.withOpacity(0.7),
-                          fontSize: 13,
+                          fontSize: 14,
                         ),
                         prefixIcon: Icon(
                           Icons.search_rounded,
                           color: colorScheme.onSurfaceVariant,
-                          size: 18,
+                          size: 20,
                         ),
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
+                          horizontal: 16,
+                          vertical: 12,
                         ),
                       ),
-                      style: const TextStyle(fontSize: 13),
+                      style: const TextStyle(fontSize: 14),
                     ),
                   ),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
 
                   // Tab Bar
                   Container(
-                    height: 36,
+                    height: 40,
                     width: double.infinity,
                     decoration: BoxDecoration(
                       color: colorScheme.surfaceVariant.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
                       children: [
@@ -229,7 +270,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         Expanded(
                           child: _buildSimpleTab(
-                            'Fav',
+                            'Favorites',
                             _filteredFavorites.length,
                             Icons.favorite_rounded,
                             1,
@@ -237,7 +278,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         Expanded(
                           child: _buildSimpleTab(
-                            'Cat',
+                            'Categories',
                             _categories.length,
                             Icons.category_rounded,
                             2,
@@ -266,11 +307,14 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           _showAddEntryDialog();
         },
-        child: const Icon(Icons.add_rounded),
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('Add Entry'),
+        elevation: 8,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
   }
@@ -286,19 +330,74 @@ class _HomeScreenState extends State<HomeScreen> {
           _currentTabIndex = index;
         });
       },
-      child: Container(
-        margin: const EdgeInsets.all(1),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.all(2),
         decoration: BoxDecoration(
           color: isSelected ? colorScheme.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: colorScheme.primary.withOpacity(0.3),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Center(
-          child: Icon(
-            icon,
-            size: 16,
-            color: isSelected
-                ? colorScheme.onPrimary
-                : colorScheme.onSurfaceVariant,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 16,
+                color: isSelected
+                    ? colorScheme.onPrimary
+                    : colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                    color: isSelected
+                        ? colorScheme.onPrimary
+                        : colorScheme.onSurfaceVariant,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (count > 0) ...[
+                const SizedBox(width: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? colorScheme.onPrimary.withOpacity(0.2)
+                        : colorScheme.onSurfaceVariant.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    count.toString(),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: isSelected
+                          ? colorScheme.onPrimary
+                          : colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
       ),
@@ -310,40 +409,21 @@ class _HomeScreenState extends State<HomeScreen> {
       return _buildEmptyState();
     }
 
-    if (_viewMode == ViewMode.grid) {
-      return Padding(
-        padding: const EdgeInsets.all(16),
-        child: MasonryGridView.count(
-          crossAxisCount: 2,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          itemCount: entries.length,
-          itemBuilder: (context, index) {
-            return PasswordEntryCard(
-              entry: entries[index],
-              onTap: () => _openEntryDetails(entries[index]),
-              onFavoriteToggle: () => _toggleFavorite(entries[index]),
-            );
-          },
-        ),
-      );
-    } else {
-      return ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: entries.length,
-        itemBuilder: (context, index) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: PasswordEntryCard(
-              entry: entries[index],
-              isListView: true,
-              onTap: () => _openEntryDetails(entries[index]),
-              onFavoriteToggle: () => _toggleFavorite(entries[index]),
-            ),
-          );
-        },
-      );
-    }
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: entries.length,
+      itemBuilder: (context, index) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: PasswordEntryCard(
+            entry: entries[index],
+            isListView: true,
+            onTap: () => _openEntryDetails(entries[index]),
+            onFavoriteToggle: () => _toggleFavorite(entries[index]),
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildCategoriesList() {
