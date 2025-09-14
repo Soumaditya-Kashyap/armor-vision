@@ -381,7 +381,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Properly sized icon
+              // Properly sized icon - centered
               Container(
                 width: 24,
                 height: 24,
@@ -393,20 +393,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ArmorThemes.getThemeIcon(mode),
                   color: themeColor,
                   size: 16,
-                ),
-              ),
-              const SizedBox(height: 6),
-              // Selection indicator
-              AnimatedOpacity(
-                duration: const Duration(milliseconds: 200),
-                opacity: isSelected ? 1.0 : 0.0,
-                child: Container(
-                  width: 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: themeColor,
-                    shape: BoxShape.circle,
-                  ),
                 ),
               ),
             ],
