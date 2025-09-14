@@ -254,7 +254,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  ArmorThemes.getThemeDisplayName(currentTheme),
+                  _getThemeDisplayName(currentTheme),
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: currentTheme == ArmorThemeMode.light
@@ -299,28 +299,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             child: _isThemeExpanded
-                ? GridView.count(
-                    key: const ValueKey('theme_grid'),
-                    crossAxisCount: 2,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
-                    childAspectRatio: 2.5,
+                ? Row(
+                    key: const ValueKey('theme_row'),
                     children: ArmorThemeMode.values.asMap().entries.map((
                       entry,
                     ) {
                       final index = entry.key;
                       final mode = entry.value;
 
-                      return AnimatedContainer(
-                        duration: Duration(milliseconds: 200 + (index * 50)),
-                        curve: Curves.easeOutCubic,
-                        child: _buildCompactThemeCard(
-                          mode,
-                          colorScheme,
-                          context,
-                          themeProvider,
+                      return Expanded(
+                        child: Padding(
+                          padding: EdgeInsets.only(
+                            right: index < ArmorThemeMode.values.length - 1 ? 8 : 0,
+                          ),
+                          child: AnimatedContainer(
+                            duration: Duration(milliseconds: 200 + (index * 50)),
+                            curve: Curves.easeOutCubic,
+                            height: 75, // Increased height to prevent overflow
+                            child: _buildSquareThemeCard(
+                              mode,
+                              colorScheme,
+                              context,
+                              themeProvider,
+                            ),
+                          ),
                         ),
                       );
                     }).toList(),
@@ -332,7 +334,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildCompactThemeCard(
+  Widget _buildSquareThemeCard(
     ArmorThemeMode mode,
     ColorScheme colorScheme,
     BuildContext context,
@@ -340,76 +342,100 @@ class _SettingsScreenState extends State<SettingsScreen> {
   ) {
     final isSelected = themeProvider.currentThemeMode == mode;
     final themeColor = ArmorThemes.getThemePreviewColor(mode);
-    final backgroundColor = ArmorThemes.getThemeBackgroundColor(mode);
+    // Make Light and System themes dark
+    final backgroundColor = (mode == ArmorThemeMode.light || mode == ArmorThemeMode.system) 
+        ? const Color(0xFF2A2A2A) 
+        : ArmorThemes.getThemeBackgroundColor(mode);
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: () => _updateTheme(context, mode),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
+          height: 80, // Square-ish height
           decoration: BoxDecoration(
             color: backgroundColor,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected
                   ? themeColor
                   : colorScheme.outline.withOpacity(0.3),
-              width: isSelected ? 1.5 : 1,
+              width: isSelected ? 2 : 1,
             ),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: themeColor.withOpacity(0.2),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                : null,
+            boxShadow: isSelected ? [
+              BoxShadow(
+                color: themeColor.withOpacity(0.3),
+                blurRadius: 6,
+                offset: const Offset(0, 3),
+              ),
+            ] : null,
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            child: Row(
-              children: [
-                Container(
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    color: themeColor.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Icon(
-                    ArmorThemes.getThemeIcon(mode),
-                    color: themeColor,
-                    size: 12,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    ArmorThemes.getThemeDisplayName(mode),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w500,
-                      color:
-                          mode == ArmorThemeMode.light ||
-                              mode == ArmorThemeMode.system
-                          ? Colors.black87
-                          : Colors.white,
-                      fontSize: 12,
+            padding: const EdgeInsets.all(6),
+            child: ClipRect(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Theme Icon
+                  Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: themeColor.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(6),
                     ),
+                    child: Icon(
+                      ArmorThemes.getThemeIcon(mode),
+                      color: themeColor,
+                      size: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  // Theme Name
+                  Text(
+                    _getThemeDisplayName(mode),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white, // All text white for consistency
+                      fontSize: 9,
+                    ),
+                    textAlign: TextAlign.center,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                ),
+                const SizedBox(height: 2),
+                // Selection Indicator
                 if (isSelected)
-                  Icon(Icons.check_rounded, color: themeColor, size: 14),
+                  Icon(
+                    Icons.check_circle_rounded,
+                    color: themeColor,
+                    size: 16,
+                  )
+                else
+                  const SizedBox(height: 16), // Maintain height when not selected
               ],
+            ),
             ),
           ),
         ),
       ),
     );
+  }
+
+  String _getThemeDisplayName(ArmorThemeMode mode) {
+    switch (mode) {
+      case ArmorThemeMode.light:
+        return 'Light';
+      case ArmorThemeMode.dark:
+        return 'Dark';
+      case ArmorThemeMode.system:
+        return 'System';
+      case ArmorThemeMode.armor:
+        return 'Special'; // Changed from "Armor Aurora" to "Special"
+    }
   }
 
   Widget _buildComingSoonCard(ColorScheme colorScheme, BuildContext context) {

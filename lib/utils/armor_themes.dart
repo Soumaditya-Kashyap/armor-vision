@@ -303,7 +303,7 @@ class ArmorThemes {
       case ArmorThemeMode.dark:
         return const Color(0xFF121212);
       case ArmorThemeMode.system:
-        return const Color(0xFFE8E8E8); // Light gray with better contrast
+        return const Color(0xFF2C2C2E); // Dark gray for better appearance
       case ArmorThemeMode.armor:
         return const Color(0xFF0B0B1F); // Deep cosmic background
     }
