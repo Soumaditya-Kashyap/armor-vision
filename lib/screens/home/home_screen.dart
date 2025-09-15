@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../models/password_entry.dart';
-import '../../services/simple_database_service.dart';
+import '../../services/database_service.dart';
 import '../../utils/constants.dart';
 import '../../widgets/password_entry_card.dart';
+import '../../widgets/dialogs/add_entry_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -38,9 +39,6 @@ class _HomeScreenState extends State<HomeScreen> {
       if (!_databaseService.isInitialized) {
         await _databaseService.initialize();
       }
-
-      // Clear existing dummy data (one-time cleanup)
-      await _databaseService.clearAllEntries();
 
       final entries = await _databaseService.getAllPasswordEntries();
       final categories = await _databaseService.getAllCategories();
@@ -637,17 +635,11 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showAddEntryDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add New Entry'),
-        content: const Text(
-          'Entry creation will be implemented in the next phase.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
-          ),
-        ],
+      barrierDismissible: false,
+      builder: (context) => AddEntryDialog(
+        onEntryAdded: () {
+          _loadData(); // Refresh the entries list
+        },
       ),
     );
   }
