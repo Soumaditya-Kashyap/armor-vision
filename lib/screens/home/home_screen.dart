@@ -39,8 +39,8 @@ class _HomeScreenState extends State<HomeScreen> {
         await _databaseService.initialize();
       }
 
-      // Create sample data if needed (for testing)
-      await _databaseService.createSampleData();
+      // Clear existing dummy data (one-time cleanup)
+      await _databaseService.clearAllEntries();
 
       final entries = await _databaseService.getAllPasswordEntries();
       final categories = await _databaseService.getAllCategories();
@@ -406,6 +406,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildEntriesList(List<PasswordEntry> entries) {
     if (entries.isEmpty) {
+      // Check which tab we're on for different empty states
+      if (_currentTabIndex == 1) {
+        return _buildEmptyState(
+          title: 'No Favorites Yet',
+          subtitle:
+              'Mark your most important passwords as favorites by tapping the heart icon. They\'ll appear here for quick access.',
+          icon: Icons.favorite_outline_rounded,
+        );
+      }
       return _buildEmptyState();
     }
 
@@ -429,9 +438,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildCategoriesList() {
     if (_categories.isEmpty) {
       return _buildEmptyState(
-        title: 'No Categories',
-        subtitle: 'Categories will help organize your entries',
-        icon: Icons.category_rounded,
+        title: 'No Categories Yet',
+        subtitle:
+            'Categories help organize your password entries. Default categories will be created when you add your first entry.',
+        icon: Icons.category_outlined,
       );
     }
 
@@ -510,9 +520,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildEmptyState({
-    String title = 'No Entries Yet',
-    String subtitle = 'Tap the + button to add your first password entry',
-    IconData icon = Icons.security_rounded,
+    String title = 'Your Vault is Empty',
+    String subtitle =
+        'Start securing your digital life by adding your first password entry. Tap the "Add Entry" button below to get started!',
+    IconData icon = Icons.lock_outline_rounded,
   }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -524,27 +535,37 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 100,
-              height: 100,
+              width: 120,
+              height: 120,
               decoration: BoxDecoration(
-                color: colorScheme.surfaceVariant.withOpacity(0.5),
-                borderRadius: BorderRadius.circular(25),
+                color: colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(
+                  color: colorScheme.primary.withOpacity(0.2),
+                  width: 2,
+                ),
               ),
-              child: Icon(icon, size: 50, color: colorScheme.onSurfaceVariant),
+              child: Icon(
+                icon,
+                size: 60,
+                color: colorScheme.primary.withOpacity(0.7),
+              ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
             Text(
               title,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w600,
+              style: theme.textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
                 color: colorScheme.onSurface,
               ),
+              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
             Text(
               subtitle,
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: colorScheme.onSurface.withOpacity(0.7),
+                height: 1.5,
               ),
               textAlign: TextAlign.center,
             ),

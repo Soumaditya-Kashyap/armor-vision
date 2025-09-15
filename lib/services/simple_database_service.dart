@@ -225,6 +225,19 @@ class DatabaseService {
     }
   }
 
+  /// Clear all password entries (for testing/reset purposes)
+  Future<void> clearAllEntries() async {
+    await _entriesBox.clear();
+  }
+
+  /// Clear all data (entries and categories)
+  Future<void> clearAllData() async {
+    await _entriesBox.clear();
+    await _categoriesBox.clear();
+    // Reinitialize default categories
+    await _createDefaultCategories();
+  }
+
   /// Create sample data for testing
   Future<void> createSampleData() async {
     // Check if we already have data
