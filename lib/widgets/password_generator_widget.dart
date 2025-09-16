@@ -283,9 +283,9 @@ class _PasswordAnalyzerWidgetState extends State<PasswordAnalyzerWidget> {
 
         _buildSecurityFeature(
           Icons.visibility_off_rounded,
-          'Zero-Knowledge Design',
-          'We cannot see your passwords',
-          'Even if our servers were compromised, your data remains encrypted and unreadable.',
+          'Offline-Only Storage',
+          'Everything stays on your device',
+          'Your passwords never leave your phone. Even if someone steals your device, they only see encrypted gibberish without your unlock method.',
         ),
       ],
     );
