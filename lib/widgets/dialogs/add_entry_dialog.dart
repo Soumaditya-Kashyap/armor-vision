@@ -92,33 +92,54 @@ class _AddEntryDialogState extends State<AddEntryDialog>
 
   @override
   Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    final screenHeight = mediaQuery.size.height;
+    final screenWidth = mediaQuery.size.width;
+    final isLandscape = mediaQuery.orientation == Orientation.landscape;
+    final keyboardHeight = mediaQuery.viewInsets.bottom;
+
+    // Calculate responsive dimensions
+    final maxWidth = screenWidth < 600 ? screenWidth * 0.95 : 500.0;
+    final maxHeight = isLandscape
+        ? screenHeight * 0.85 - keyboardHeight
+        : screenHeight * 0.9 - keyboardHeight;
+
+    // Adjust padding for smaller screens
+    final dialogPadding = screenWidth < 400 ? 12.0 : 16.0;
+
     return SlideTransition(
       position: _slideAnimation,
       child: FadeTransition(
         opacity: _fadeAnimation,
         child: Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.all(16),
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 500, maxHeight: 600),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ],
+          insetPadding: EdgeInsets.all(dialogPadding),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: maxWidth,
+              maxHeight: maxHeight,
+              minHeight: isLandscape ? 300 : 400,
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildHeader(),
-                Expanded(child: _buildForm()),
-                _buildActionButtons(),
-              ],
+            child: Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(isLandscape ? 20 : 28),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildHeader(),
+                  Flexible(child: _buildForm()),
+                  _buildActionButtons(),
+                ],
+              ),
             ),
           ),
         ),
@@ -127,27 +148,33 @@ class _AddEntryDialogState extends State<AddEntryDialog>
   }
 
   Widget _buildHeader() {
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+    final headerPadding = isLandscape ? 16.0 : 24.0;
+    final iconSize = isLandscape ? 24.0 : 28.0;
+    final borderRadius = isLandscape ? 20.0 : 28.0;
+
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(headerPadding),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(28),
-          topRight: Radius.circular(28),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(borderRadius),
+          topRight: Radius.circular(borderRadius),
         ),
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(isLandscape ? 8 : 12),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(isLandscape ? 12 : 16),
             ),
             child: Icon(
               Icons.add_rounded,
               color: Theme.of(context).colorScheme.primary,
-              size: 28,
+              size: iconSize,
             ),
           ),
           const SizedBox(width: 16),
@@ -160,17 +187,19 @@ class _AddEntryDialogState extends State<AddEntryDialog>
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: isLandscape ? 18 : null,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Create a new password entry',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withOpacity(0.7),
+                if (!isLandscape) const SizedBox(height: 4),
+                if (!isLandscape)
+                  Text(
+                    'Create a new password entry',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.7),
+                    ),
                   ),
-                ),
               ],
             ),
           ),
@@ -193,21 +222,27 @@ class _AddEntryDialogState extends State<AddEntryDialog>
   }
 
   Widget _buildForm() {
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+    final formPadding = isLandscape ? 16.0 : 24.0;
+    final spacingSmall = isLandscape ? 16.0 : 20.0;
+    final spacingLarge = isLandscape ? 20.0 : 24.0;
+
     return Form(
       key: _formKey,
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: EdgeInsets.all(formPadding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildBasicFields(),
-            const SizedBox(height: 24),
+            SizedBox(height: spacingLarge),
             _buildCategorySelection(),
-            const SizedBox(height: 24),
+            SizedBox(height: spacingLarge),
             _buildCustomFields(),
-            const SizedBox(height: 20),
+            SizedBox(height: spacingSmall),
             _buildAddFieldButton(),
-            const SizedBox(height: 24),
+            SizedBox(height: spacingLarge),
             _buildNotesField(),
           ],
         ),
@@ -385,51 +420,98 @@ class _AddEntryDialogState extends State<AddEntryDialog>
   }
 
   Widget _buildActionButtons() {
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final buttonPadding = isLandscape ? 16.0 : 24.0;
+    final buttonHeight = isLandscape ? 12.0 : 16.0;
+    final borderRadius = isLandscape ? 20.0 : 28.0;
+
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(buttonPadding),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(28),
-          bottomRight: Radius.circular(28),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(borderRadius),
+          bottomRight: Radius.circular(borderRadius),
         ),
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: OutlinedButton(
-              onPressed: _isSaving ? null : _closeDialog,
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+      child: (isLandscape || screenWidth < 400)
+          ? Column(
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: _isSaving ? null : _saveEntry,
+                    style: FilledButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: buttonHeight),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: _isSaving
+                        ? SizedBox(
+                            height: isLandscape ? 16 : 20,
+                            width: isLandscape ? 16 : 20,
+                            child: const CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text('Save Entry'),
+                  ),
                 ),
-              ),
-              child: const Text('Cancel'),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            flex: 2,
-            child: FilledButton(
-              onPressed: _isSaving ? null : _saveEntry,
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                SizedBox(height: isLandscape ? 8 : 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: _isSaving ? null : _closeDialog,
+                    style: OutlinedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: buttonHeight),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Text('Cancel'),
+                  ),
                 ),
-              ),
-              child: _isSaving
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Save Entry'),
+              ],
+            )
+          : Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _isSaving ? null : _closeDialog,
+                    style: OutlinedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: buttonHeight),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: const Text('Cancel'),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  flex: 2,
+                  child: FilledButton(
+                    onPressed: _isSaving ? null : _saveEntry,
+                    style: FilledButton.styleFrom(
+                      padding: EdgeInsets.symmetric(vertical: buttonHeight),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: _isSaving
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Save Entry'),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
-      ),
     );
   }
 
