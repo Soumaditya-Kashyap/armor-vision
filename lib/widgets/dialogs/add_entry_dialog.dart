@@ -4,12 +4,16 @@ import 'dart:math';
 import '../../models/password_entry.dart';
 import '../../services/database_service.dart';
 import '../custom_field_widget.dart';
-import '../category_selector.dart';
 
 class AddEntryDialog extends StatefulWidget {
   final VoidCallback? onEntryAdded;
+  final String? preSelectedCategory;
 
-  const AddEntryDialog({super.key, this.onEntryAdded});
+  const AddEntryDialog({
+    super.key,
+    this.onEntryAdded,
+    this.preSelectedCategory,
+  });
 
   @override
   State<AddEntryDialog> createState() => _AddEntryDialogState();
@@ -44,6 +48,11 @@ class _AddEntryDialogState extends State<AddEntryDialog>
     super.initState();
     _setupAnimations();
     _initializeDefaultFields();
+
+    // Set pre-selected category if provided
+    if (widget.preSelectedCategory != null) {
+      _selectedCategory = widget.preSelectedCategory;
+    }
   }
 
   void _setupAnimations() {
@@ -193,7 +202,9 @@ class _AddEntryDialogState extends State<AddEntryDialog>
                 if (!isLandscape) const SizedBox(height: 4),
                 if (!isLandscape)
                   Text(
-                    'Create a new password entry',
+                    _selectedCategory != null
+                        ? 'Category: ${_formatCategoryName(_selectedCategory!)}'
+                        : 'Create a new password entry',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(
                         context,
@@ -236,8 +247,6 @@ class _AddEntryDialogState extends State<AddEntryDialog>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildBasicFields(),
-            SizedBox(height: spacingLarge),
-            _buildCategorySelection(),
             SizedBox(height: spacingLarge),
             _buildCustomFields(),
             SizedBox(height: spacingSmall),
@@ -285,30 +294,6 @@ class _AddEntryDialogState extends State<AddEntryDialog>
           ),
           textInputAction: TextInputAction.next,
           maxLines: 2,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCategorySelection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Category',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-        const SizedBox(height: 8),
-        CategorySelector(
-          selectedCategory: _selectedCategory,
-          onCategorySelected: (category) {
-            setState(() {
-              _selectedCategory = category;
-            });
-          },
         ),
       ],
     );
@@ -639,6 +624,35 @@ class _AddEntryDialogState extends State<AddEntryDialog>
         duration: Duration(seconds: isError ? 4 : 3),
       ),
     );
+  }
+
+  String _formatCategoryName(String categoryName) {
+    if (categoryName.startsWith('CUSTOM_')) {
+      final parts = categoryName.split('_');
+      if (parts.length >= 2) {
+        return parts[1]
+            .replaceAll('_', ' ')
+            .toLowerCase()
+            .split(' ')
+            .map(
+              (word) => word.isNotEmpty
+                  ? '${word[0].toUpperCase()}${word.substring(1)}'
+                  : '',
+            )
+            .join(' ');
+      }
+    }
+
+    return categoryName
+        .replaceAll('_', ' ')
+        .toLowerCase()
+        .split(' ')
+        .map(
+          (word) => word.isNotEmpty
+              ? '${word[0].toUpperCase()}${word.substring(1)}'
+              : '',
+        )
+        .join(' ');
   }
 
   @override

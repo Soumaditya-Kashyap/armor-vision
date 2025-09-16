@@ -3,7 +3,7 @@ import '../../models/password_entry.dart';
 import '../../services/database_service.dart';
 import '../../utils/constants.dart';
 import '../../widgets/password_entry_card.dart';
-import '../../widgets/dialogs/add_entry_dialog.dart';
+import '../category_selection_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -636,7 +636,7 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AddEntryDialog(
+      builder: (context) => CategorySelectionScreen(
         onEntryAdded: () {
           _loadData(); // Refresh the entries list
         },
