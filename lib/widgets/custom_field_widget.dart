@@ -113,9 +113,13 @@ class _CustomFieldWidgetState extends State<CustomFieldWidget> {
           if (widget.showPasswordGenerator) ...[
             const SizedBox(width: 8),
             IconButton(
-              onPressed: _showPasswordGenerator,
+              onPressed: widget.field.value.isEmpty
+                  ? null
+                  : _showPasswordAnalyzer,
               icon: const Icon(Icons.vpn_key_rounded),
-              tooltip: 'Generate Password',
+              tooltip: widget.field.value.isEmpty
+                  ? 'Enter password to analyze'
+                  : 'Analyze Password Encryption',
               style: IconButton.styleFrom(
                 padding: const EdgeInsets.all(8),
                 minimumSize: Size.zero,
@@ -374,16 +378,13 @@ class _CustomFieldWidgetState extends State<CustomFieldWidget> {
     );
   }
 
-  void _showPasswordGenerator() {
+  void _showPasswordAnalyzer() {
+    if (widget.field.value.isEmpty) return;
+
     showDialog(
       context: context,
-      builder: (context) => PasswordGeneratorWidget(
-        onPasswordGenerated: (password) {
-          _controller.text = password;
-          final updatedField = widget.field.copyWith(value: password);
-          widget.onFieldChanged(updatedField);
-        },
-      ),
+      builder: (context) =>
+          PasswordAnalyzerWidget(password: widget.field.value),
     );
   }
 
