@@ -27,7 +27,8 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
   // State variables
   List<Category> _allCategories = [];
   bool _isLoading = true;
-  String? _selectedCategory;
+  Set<String> _selectedCategories = {};
+  bool _isMultiSelectMode = false;
 
   @override
   void initState() {
@@ -236,7 +237,9 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
                 if (!isLandscape) ...[
                   const SizedBox(height: 2),
                   Text(
-                    'Select a category for your new entry',
+                    _isMultiSelectMode
+                        ? 'Tap to toggle, long press started multi-select'
+                        : 'Tap to select, long press for multi-select',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(
                         context,
@@ -299,40 +302,89 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
   }
 
   Widget _buildCategoryCircle(Category category) {
-    final isSelected = _selectedCategory == category.name;
+    final isSelected = _selectedCategories.contains(category.name);
     final categoryColor = _getCategoryColor(category.color);
     final categoryIcon = _getCategoryIcon(category.iconName);
 
     return GestureDetector(
       onTap: () {
         setState(() {
-          _selectedCategory = category.name;
+          if (_isMultiSelectMode) {
+            // In multi-select mode, toggle selection
+            if (isSelected) {
+              _selectedCategories.remove(category.name);
+            } else {
+              _selectedCategories.add(category.name);
+            }
+          } else {
+            // In single-select mode, toggle or select single category
+            if (isSelected) {
+              _selectedCategories.clear(); // Unselect if tapped again
+            } else {
+              _selectedCategories.clear();
+              _selectedCategories.add(category.name);
+            }
+          }
         });
         HapticFeedback.lightImpact();
+      },
+      onLongPress: () {
+        setState(() {
+          // Enable multi-select mode and add this category if not selected
+          _isMultiSelectMode = true;
+          if (!isSelected) {
+            _selectedCategories.add(category.name);
+          }
+        });
+        HapticFeedback.mediumImpact();
       },
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 70,
-            height: 70,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isSelected
-                  ? categoryColor
-                  : categoryColor.withOpacity(0.1),
-              border: Border.all(
-                color: isSelected
-                    ? categoryColor
-                    : categoryColor.withOpacity(0.3),
-                width: isSelected ? 3 : 2,
+          Stack(
+            children: [
+              Container(
+                width: 70,
+                height: 70,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isSelected
+                      ? categoryColor
+                      : categoryColor.withOpacity(0.1),
+                  border: Border.all(
+                    color: isSelected
+                        ? categoryColor
+                        : categoryColor.withOpacity(0.3),
+                    width: isSelected ? 3 : 2,
+                  ),
+                ),
+                child: Icon(
+                  categoryIcon,
+                  size: 32,
+                  color: isSelected ? Colors.white : categoryColor,
+                ),
               ),
-            ),
-            child: Icon(
-              categoryIcon,
-              size: 32,
-              color: isSelected ? Colors.white : categoryColor,
-            ),
+              // Multi-select indicator
+              if (_isMultiSelectMode)
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isSelected ? Colors.green : Colors.grey.shade300,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: Icon(
+                      isSelected ? Icons.check : Icons.circle_outlined,
+                      size: 12,
+                      color: isSelected ? Colors.white : Colors.grey.shade600,
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 8),
           Text(
@@ -412,10 +464,45 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
       child: (isLandscape || screenWidth < 400)
           ? Column(
               children: [
+                // Multi-select mode indicator
+                if (_isMultiSelectMode) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.check_circle,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Multi-select mode: ${_selectedCategories.length} selected',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
-                    onPressed: _selectedCategory == null
+                    onPressed: _selectedCategories.isEmpty
                         ? null
                         : _proceedToForm,
                     style: FilledButton.styleFrom(
@@ -424,22 +511,56 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text('Continue'),
+                    child: Text(
+                      _isMultiSelectMode
+                          ? 'Continue with ${_selectedCategories.length} categories'
+                          : 'Continue',
+                    ),
                   ),
                 ),
                 SizedBox(height: isLandscape ? 8 : 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: _closeDialog,
-                    style: OutlinedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: buttonHeight),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                Row(
+                  children: [
+                    if (_isMultiSelectMode) ...[
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            setState(() {
+                              _isMultiSelectMode = false;
+                              if (_selectedCategories.length > 1) {
+                                // Keep only the first selected category
+                                final firstSelected = _selectedCategories.first;
+                                _selectedCategories.clear();
+                                _selectedCategories.add(firstSelected);
+                              }
+                            });
+                          },
+                          style: OutlinedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(
+                              vertical: buttonHeight,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text('Single Select'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: _closeDialog,
+                        style: OutlinedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(vertical: buttonHeight),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text('Cancel'),
                       ),
                     ),
-                    child: const Text('Cancel'),
-                  ),
+                  ],
                 ),
               ],
             )
@@ -461,7 +582,7 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
                 Expanded(
                   flex: 2,
                   child: FilledButton(
-                    onPressed: _selectedCategory == null
+                    onPressed: _selectedCategories.isEmpty
                         ? null
                         : _proceedToForm,
                     style: FilledButton.styleFrom(
@@ -470,7 +591,11 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text('Continue'),
+                    child: Text(
+                      _isMultiSelectMode
+                          ? 'Continue with ${_selectedCategories.length} categories'
+                          : 'Continue',
+                    ),
                   ),
                 ),
               ],
@@ -499,7 +624,8 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
 
             setState(() {
               _allCategories.add(newCategory);
-              _selectedCategory = newCategory.id;
+              _selectedCategories.clear();
+              _selectedCategories.add(newCategory.name);
             });
 
             _showSnackBar('Category created successfully!');
@@ -512,7 +638,7 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
   }
 
   void _proceedToForm() {
-    if (_selectedCategory == null) return;
+    if (_selectedCategories.isEmpty) return;
 
     Navigator.of(context).pop(); // Close this dialog
 
@@ -520,7 +646,9 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
       context: context,
       barrierDismissible: false,
       builder: (context) => AddEntryDialog(
-        preSelectedCategory: _selectedCategory,
+        preSelectedCategories: _selectedCategories.toList(),
+        preSelectedCategory:
+            _selectedCategories.first, // For backward compatibility
         onEntryAdded: widget.onEntryAdded,
       ),
     );

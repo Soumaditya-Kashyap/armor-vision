@@ -8,11 +8,13 @@ import '../custom_field_widget.dart';
 class AddEntryDialog extends StatefulWidget {
   final VoidCallback? onEntryAdded;
   final String? preSelectedCategory;
+  final List<String>? preSelectedCategories;
 
   const AddEntryDialog({
     super.key,
     this.onEntryAdded,
     this.preSelectedCategory,
+    this.preSelectedCategories,
   });
 
   @override
@@ -50,7 +52,10 @@ class _AddEntryDialogState extends State<AddEntryDialog>
     _initializeDefaultFields();
 
     // Set pre-selected category if provided
-    if (widget.preSelectedCategory != null) {
+    if (widget.preSelectedCategories != null &&
+        widget.preSelectedCategories!.isNotEmpty) {
+      _selectedCategory = widget.preSelectedCategories!.first;
+    } else if (widget.preSelectedCategory != null) {
       _selectedCategory = widget.preSelectedCategory;
     }
   }
