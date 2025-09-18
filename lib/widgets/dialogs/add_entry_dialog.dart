@@ -337,22 +337,7 @@ class _AddEntryDialogState extends State<AddEntryDialog>
                     : null,
               ),
             ),
-            if (_customFields.any((field) => field.type == FieldType.password))
-              IconButton(
-                onPressed: () {
-                  setState(() {
-                    _isPasswordVisible = !_isPasswordVisible;
-                  });
-                },
-                icon: Icon(
-                  _isPasswordVisible
-                      ? Icons.visibility_off_rounded
-                      : Icons.visibility_rounded,
-                ),
-                tooltip: _isPasswordVisible
-                    ? 'Hide passwords'
-                    : 'Show passwords',
-              ),
+            // Eye button removed as requested
           ],
         ),
         const SizedBox(height: 8),
