@@ -23,8 +23,11 @@ class CustomFieldWidget extends StatefulWidget {
   State<CustomFieldWidget> createState() => _CustomFieldWidgetState();
 }
 
-class _CustomFieldWidgetState extends State<CustomFieldWidget> {
+class _CustomFieldWidgetState extends State<CustomFieldWidget>
+    with TickerProviderStateMixin {
   late TextEditingController _controller;
+  late AnimationController _removeButtonAnimationController;
+  late Animation<double> _removeButtonAnimation;
   bool _obscureText = true;
 
   @override
@@ -33,6 +36,22 @@ class _CustomFieldWidgetState extends State<CustomFieldWidget> {
     _controller = TextEditingController(text: widget.field.value);
     _obscureText =
         widget.field.type == FieldType.password && !widget.isPasswordVisible;
+
+    // Initialize animation controller for remove button
+    _removeButtonAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    _removeButtonAnimation = CurvedAnimation(
+      parent: _removeButtonAnimationController,
+      curve: Curves.easeInOut,
+    );
+
+    // Start animation if remove button should be visible
+    if (widget.onRemoveField != null) {
+      _removeButtonAnimationController.forward();
+    }
   }
 
   @override
@@ -44,6 +63,15 @@ class _CustomFieldWidgetState extends State<CustomFieldWidget> {
     if (oldWidget.isPasswordVisible != widget.isPasswordVisible) {
       _obscureText =
           widget.field.type == FieldType.password && !widget.isPasswordVisible;
+    }
+
+    // Animate remove button visibility
+    if (oldWidget.onRemoveField != widget.onRemoveField) {
+      if (widget.onRemoveField != null) {
+        _removeButtonAnimationController.forward();
+      } else {
+        _removeButtonAnimationController.reverse();
+      }
     }
   }
 
@@ -78,69 +106,124 @@ class _CustomFieldWidgetState extends State<CustomFieldWidget> {
           topRight: Radius.circular(16),
         ),
       ),
-      child: Row(
+      child: Stack(
         children: [
-          Icon(
-            _getFieldIcon(),
-            size: 18,
-            color: Theme.of(context).colorScheme.primary,
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              widget.field.label,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.onSurface,
+          // Main content row - never changes size
+          Row(
+            children: [
+              Icon(
+                _getFieldIcon(),
+                size: 18,
+                color: Theme.of(context).colorScheme.primary,
               ),
-            ),
-          ),
-          if (widget.field.isRequired)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.error.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                'Required',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: Theme.of(context).colorScheme.error,
-                  fontWeight: FontWeight.w500,
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  widget.field.label,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
                 ),
               ),
-            ),
-          if (widget.showPasswordGenerator) ...[
-            const SizedBox(width: 8),
-            IconButton(
-              onPressed: widget.field.value.isEmpty
-                  ? null
-                  : _showPasswordAnalyzer,
-              icon: const Icon(Icons.vpn_key_rounded),
-              tooltip: widget.field.value.isEmpty
-                  ? 'Enter password to analyze'
-                  : 'Analyze Password Encryption',
-              style: IconButton.styleFrom(
-                padding: const EdgeInsets.all(8),
-                minimumSize: Size.zero,
-                visualDensity: VisualDensity.compact,
+              if (widget.showPasswordGenerator) ...[
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: widget.field.value.isEmpty
+                      ? null
+                      : _showPasswordAnalyzer,
+                  icon: const Icon(Icons.vpn_key_rounded),
+                  tooltip: widget.field.value.isEmpty
+                      ? 'Enter password to analyze'
+                      : 'Analyze Password Encryption',
+                  style: IconButton.styleFrom(
+                    padding: const EdgeInsets.all(8),
+                    minimumSize: Size.zero,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                ),
+              ],
+              // Reserve space for required badge and minus button
+              const SizedBox(width: 120), // Enough space for both
+            ],
+          ),
+          // Required badge - animates position naturally
+          if (widget.field.isRequired)
+            Positioned(
+              right: 50, // Better balanced position
+              top: 0,
+              bottom: 0,
+              child: AnimatedBuilder(
+                animation: _removeButtonAnimation,
+                builder: (context, child) {
+                  return SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0.8, 0.0), // Start closer, move less
+                      end: Offset.zero, // To its reserved position
+                    ).animate(_removeButtonAnimation),
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.error.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'Required',
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.error,
+                                fontWeight: FontWeight.w500,
+                              ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
-          ],
-          if (widget.onRemoveField != null) ...[
-            const SizedBox(width: 4),
-            IconButton(
-              onPressed: widget.onRemoveField,
-              icon: const Icon(Icons.remove_circle_outline_rounded),
-              tooltip: 'Remove Field',
-              style: IconButton.styleFrom(
-                padding: const EdgeInsets.all(8),
-                minimumSize: Size.zero,
-                visualDensity: VisualDensity.compact,
-                foregroundColor: Theme.of(context).colorScheme.error,
-              ),
+          // Minus button positioned absolutely - doesn't affect layout
+          Positioned(
+            right: 0,
+            top: 0,
+            bottom: 0,
+            child: AnimatedBuilder(
+              animation: _removeButtonAnimation,
+              builder: (context, child) {
+                return SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(1.0, 0.0), // Start off screen
+                    end: Offset.zero, // Slide to final position
+                  ).animate(_removeButtonAnimation),
+                  child: FadeTransition(
+                    opacity: _removeButtonAnimation,
+                    child: widget.onRemoveField != null
+                        ? IconButton(
+                            onPressed: widget.onRemoveField,
+                            icon: const Icon(
+                              Icons.remove_circle_outline_rounded,
+                            ),
+                            tooltip: 'Remove Field',
+                            style: IconButton.styleFrom(
+                              padding: const EdgeInsets.all(8),
+                              minimumSize: Size.zero,
+                              visualDensity: VisualDensity.compact,
+                              foregroundColor: Theme.of(
+                                context,
+                              ).colorScheme.error,
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                );
+              },
             ),
-          ],
+          ),
         ],
       ),
     );
@@ -391,6 +474,7 @@ class _CustomFieldWidgetState extends State<CustomFieldWidget> {
   @override
   void dispose() {
     _controller.dispose();
+    _removeButtonAnimationController.dispose();
     super.dispose();
   }
 }
