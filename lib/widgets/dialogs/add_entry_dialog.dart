@@ -44,6 +44,7 @@ class _AddEntryDialogState extends State<AddEntryDialog>
   EntryColor _selectedColor = EntryColor.blue;
   bool _isSaving = false;
   bool _isPasswordVisible = false;
+  bool _isEditMode = false; // New: Edit mode for field management
 
   @override
   void initState() {
@@ -241,7 +242,6 @@ class _AddEntryDialogState extends State<AddEntryDialog>
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
     final formPadding = isLandscape ? 16.0 : 24.0;
-    final spacingSmall = isLandscape ? 16.0 : 20.0;
     final spacingLarge = isLandscape ? 20.0 : 24.0;
 
     return Form(
@@ -254,8 +254,6 @@ class _AddEntryDialogState extends State<AddEntryDialog>
             _buildBasicFields(),
             SizedBox(height: spacingLarge),
             _buildCustomFields(),
-            SizedBox(height: spacingSmall),
-            _buildAddFieldButton(),
             SizedBox(height: spacingLarge),
             _buildNotesField(),
           ],
@@ -318,6 +316,27 @@ class _AddEntryDialogState extends State<AddEntryDialog>
               ),
             ),
             const Spacer(),
+            // Edit mode toggle button
+            IconButton(
+              onPressed: () {
+                setState(() {
+                  _isEditMode = !_isEditMode;
+                });
+              },
+              icon: Icon(
+                _isEditMode ? Icons.check_rounded : Icons.edit_rounded,
+                size: 20,
+              ),
+              tooltip: _isEditMode ? 'Done editing' : 'Edit fields',
+              style: IconButton.styleFrom(
+                backgroundColor: _isEditMode
+                    ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                    : null,
+                foregroundColor: _isEditMode
+                    ? Theme.of(context).colorScheme.primary
+                    : null,
+              ),
+            ),
             if (_customFields.any((field) => field.type == FieldType.password))
               IconButton(
                 onPressed: () {
@@ -337,6 +356,51 @@ class _AddEntryDialogState extends State<AddEntryDialog>
           ],
         ),
         const SizedBox(height: 8),
+
+        // Show message if no fields
+        if (_customFields.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(
+                context,
+              ).colorScheme.surfaceVariant.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+              ),
+            ),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.note_add_rounded,
+                  size: 32,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Simple Note Mode',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'No fields added. This entry will work as a simple note with title, description, and notes only.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant.withOpacity(0.8),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+
+        // Render existing fields
         ..._customFields.asMap().entries.map((entry) {
           final index = entry.key;
           final field = entry.value;
@@ -350,7 +414,8 @@ class _AddEntryDialogState extends State<AddEntryDialog>
                   _customFields[index] = updatedField;
                 });
               },
-              onRemoveField: _customFields.length > 2
+              // Show remove button only in edit mode
+              onRemoveField: _isEditMode
                   ? () {
                       setState(() {
                         _customFields.removeAt(index);
@@ -361,6 +426,10 @@ class _AddEntryDialogState extends State<AddEntryDialog>
             ),
           );
         }).toList(),
+
+        // Add field button (always visible)
+        const SizedBox(height: 8),
+        _buildAddFieldButton(),
       ],
     );
   }
@@ -524,24 +593,13 @@ class _AddEntryDialogState extends State<AddEntryDialog>
       return;
     }
 
-    // Validate that at least one password field has a value
+    // Validate password strength for any password fields that have values
     final passwordFields = _customFields.where(
-      (f) => f.type == FieldType.password,
+      (f) => f.type == FieldType.password && f.value.trim().isNotEmpty,
     );
-    if (passwordFields.isEmpty ||
-        passwordFields.every((f) => f.value.trim().isEmpty)) {
-      _showSnackBar(
-        'Please add at least one password field with a value',
-        isError: true,
-      );
-      return;
-    }
 
-    // Validate password strength
-    final passwords = passwordFields
-        .map((f) => f.value.trim())
-        .where((p) => p.isNotEmpty);
-    for (final password in passwords) {
+    for (final field in passwordFields) {
+      final password = field.value.trim();
       if (password.length < 8) {
         _showSnackBar(
           'Password should be at least 8 characters long',
