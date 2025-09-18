@@ -85,15 +85,27 @@ class DatabaseService {
       await _settingsBox.put('default', settings);
     }
 
-    // Initialize default categories if not exists
-    if (_categoriesBox.isEmpty) {
-      await _createDefaultCategories();
+    // Initialize default categories if not exists or ensure all presets exist
+    await _ensurePresetCategories();
+  }
+
+  /// Ensure all preset categories exist
+  Future<void> _ensurePresetCategories() async {
+    final presetCategories = _getPresetCategories();
+
+    for (final presetCategory in presetCategories) {
+      // Check if this preset category already exists
+      final existingCategory = _categoriesBox.get(presetCategory.id);
+      if (existingCategory == null) {
+        // Add missing preset category
+        await _categoriesBox.put(presetCategory.id, presetCategory);
+      }
     }
   }
 
-  /// Create default categories
-  Future<void> _createDefaultCategories() async {
-    final defaultCategories = [
+  /// Get list of preset categories
+  List<Category> _getPresetCategories() {
+    return [
       Category(
         id: 'general',
         name: 'General',
@@ -104,11 +116,11 @@ class DatabaseService {
         sortOrder: 1,
       ),
       Category(
-        id: 'social',
-        name: 'Social Media',
-        description: 'Social media accounts',
-        color: EntryColor.indigo,
-        iconName: 'people',
+        id: 'gmail',
+        name: 'Gmail',
+        description: 'Gmail and Google accounts',
+        color: EntryColor.red,
+        iconName: 'email',
         createdAt: DateTime.now(),
         sortOrder: 2,
       ),
@@ -122,20 +134,20 @@ class DatabaseService {
         sortOrder: 3,
       ),
       Category(
-        id: 'banking',
-        name: 'Banking',
-        description: 'Financial and banking accounts',
-        color: EntryColor.red,
-        iconName: 'account_balance',
+        id: 'social',
+        name: 'Social Media',
+        description: 'Social media accounts',
+        color: EntryColor.indigo,
+        iconName: 'people',
         createdAt: DateTime.now(),
         sortOrder: 4,
       ),
       Category(
-        id: 'shopping',
-        name: 'Shopping',
-        description: 'Online shopping accounts',
-        color: EntryColor.amber,
-        iconName: 'shopping_cart',
+        id: 'banking',
+        name: 'Banking',
+        description: 'Financial and banking accounts',
+        color: EntryColor.orange,
+        iconName: 'account_balance',
         createdAt: DateTime.now(),
         sortOrder: 5,
       ),
@@ -148,11 +160,16 @@ class DatabaseService {
         createdAt: DateTime.now(),
         sortOrder: 6,
       ),
+      Category(
+        id: 'shopping',
+        name: 'Shopping',
+        description: 'Online shopping accounts',
+        color: EntryColor.amber,
+        iconName: 'shopping_cart',
+        createdAt: DateTime.now(),
+        sortOrder: 7,
+      ),
     ];
-
-    for (final category in defaultCategories) {
-      await _categoriesBox.put(category.id, category);
-    }
   }
 
   /// Save password entry
@@ -176,8 +193,9 @@ class DatabaseService {
   }
 
   /// Get all password entries
-  Future<List<PasswordEntry>> getAllPasswordEntries(
-      {bool includeArchived = false}) async {
+  Future<List<PasswordEntry>> getAllPasswordEntries({
+    bool includeArchived = false,
+  }) async {
     _ensureInitialized();
     try {
       final entries = _entriesBox.values.toList();
@@ -482,7 +500,8 @@ class DatabaseService {
   void _ensureInitialized() {
     if (!_isInitialized) {
       throw DatabaseException(
-          'Database not initialized. Call initialize() first.');
+        'Database not initialized. Call initialize() first.',
+      );
     }
   }
 
