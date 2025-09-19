@@ -296,7 +296,6 @@ class _AddEntryDialogState extends State<AddEntryDialog>
             fillColor: Theme.of(context).colorScheme.surface,
           ),
           textInputAction: TextInputAction.next,
-          maxLines: 2,
         ),
       ],
     );
