@@ -241,8 +241,8 @@ class _AddEntryDialogState extends State<AddEntryDialog>
   Widget _buildForm() {
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
-    final formPadding = isLandscape ? 16.0 : 24.0;
-    final spacingLarge = isLandscape ? 20.0 : 24.0;
+    final formPadding = isLandscape ? 16.0 : 20.0;
+    final spacingMedium = isLandscape ? 16.0 : 18.0;
 
     return Form(
       key: _formKey,
@@ -252,9 +252,9 @@ class _AddEntryDialogState extends State<AddEntryDialog>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildBasicFields(),
-            SizedBox(height: spacingLarge),
+            SizedBox(height: spacingMedium),
             _buildCustomFields(),
-            SizedBox(height: spacingLarge),
+            SizedBox(height: spacingMedium),
             _buildNotesField(),
           ],
         ),
@@ -284,7 +284,7 @@ class _AddEntryDialogState extends State<AddEntryDialog>
             return null;
           },
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
         TextFormField(
           controller: _descriptionController,
           decoration: InputDecoration(
@@ -334,12 +334,13 @@ class _AddEntryDialogState extends State<AddEntryDialog>
                 foregroundColor: _isEditMode
                     ? Theme.of(context).colorScheme.primary
                     : null,
+                padding: const EdgeInsets.all(8),
+                minimumSize: const Size(36, 36),
               ),
             ),
-            // Eye button removed as requested
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
 
         // Show message if no fields
         if (_customFields.isEmpty)
@@ -349,20 +350,20 @@ class _AddEntryDialogState extends State<AddEntryDialog>
             decoration: BoxDecoration(
               color: Theme.of(
                 context,
-              ).colorScheme.surfaceVariant.withOpacity(0.5),
+              ).colorScheme.surfaceVariant.withOpacity(0.3),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
               ),
             ),
             child: Column(
               children: [
                 Icon(
                   Icons.note_add_rounded,
-                  size: 32,
+                  size: 28,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
                   'Simple Note Mode',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -370,9 +371,9 @@ class _AddEntryDialogState extends State<AddEntryDialog>
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
-                  'No fields added. This entry will work as a simple note with title, description, and notes only.',
+                  'No fields added. This entry will work as a simple note.',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(
                       context,
@@ -385,31 +386,32 @@ class _AddEntryDialogState extends State<AddEntryDialog>
           ),
 
         // Render existing fields
-        ..._customFields.asMap().entries.map((entry) {
-          final index = entry.key;
-          final field = entry.value;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: CustomFieldWidget(
-              field: field,
-              isPasswordVisible: _isPasswordVisible,
-              onFieldChanged: (updatedField) {
-                setState(() {
-                  _customFields[index] = updatedField;
-                });
-              },
-              // Show remove button only in edit mode
-              onRemoveField: _isEditMode
-                  ? () {
-                      setState(() {
-                        _customFields.removeAt(index);
-                      });
-                    }
-                  : null,
-              showPasswordGenerator: field.type == FieldType.password,
-            ),
-          );
-        }).toList(),
+        if (_customFields.isNotEmpty)
+          ...(_customFields.asMap().entries.map((entry) {
+            final index = entry.key;
+            final field = entry.value;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: CustomFieldWidget(
+                field: field,
+                isPasswordVisible: _isPasswordVisible,
+                onFieldChanged: (updatedField) {
+                  setState(() {
+                    _customFields[index] = updatedField;
+                  });
+                },
+                // Show remove button only in edit mode
+                onRemoveField: _isEditMode
+                    ? () {
+                        setState(() {
+                          _customFields.removeAt(index);
+                        });
+                      }
+                    : null,
+                showPasswordGenerator: field.type == FieldType.password,
+              ),
+            );
+          }).toList()),
 
         // Add field button (always visible)
         const SizedBox(height: 8),
@@ -423,12 +425,15 @@ class _AddEntryDialogState extends State<AddEntryDialog>
       width: double.infinity,
       child: OutlinedButton.icon(
         onPressed: _showAddFieldDialog,
-        icon: const Icon(Icons.add_rounded),
+        icon: const Icon(Icons.add_rounded, size: 18),
         label: const Text('Add Custom Field'),
         style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          side: BorderSide(
+            color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
           ),
         ),
       ),
