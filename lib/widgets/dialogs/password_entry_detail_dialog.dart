@@ -319,13 +319,15 @@ class _PasswordEntryDetailDialogState extends State<PasswordEntryDetailDialog>
   Widget _buildFieldsList(ThemeData theme, ColorScheme colorScheme) {
     if (widget.entry.customFields.isEmpty) {
       return Container(
-        padding: const EdgeInsets.all(24),
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: colorScheme.surfaceVariant.withOpacity(0.3),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           children: [
+            const SizedBox(height: 8),
             Icon(
               Icons.inbox_outlined,
               size: 48,
@@ -347,6 +349,7 @@ class _PasswordEntryDetailDialogState extends State<PasswordEntryDetailDialog>
               ),
               textAlign: TextAlign.center,
             ),
+            const SizedBox(height: 8),
           ],
         ),
       );
