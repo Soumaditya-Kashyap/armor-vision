@@ -7,14 +7,18 @@ import '../custom_field_widget.dart';
 
 class AddEntryDialog extends StatefulWidget {
   final VoidCallback? onEntryAdded;
+  final VoidCallback? onEntryUpdated;
   final String? preSelectedCategory;
   final List<String>? preSelectedCategories;
+  final PasswordEntry? existingEntry;
 
   const AddEntryDialog({
     super.key,
     this.onEntryAdded,
+    this.onEntryUpdated,
     this.preSelectedCategory,
     this.preSelectedCategories,
+    this.existingEntry,
   });
 
   @override
@@ -50,14 +54,21 @@ class _AddEntryDialogState extends State<AddEntryDialog>
   void initState() {
     super.initState();
     _setupAnimations();
-    _initializeDefaultFields();
 
-    // Set pre-selected category if provided
-    if (widget.preSelectedCategories != null &&
-        widget.preSelectedCategories!.isNotEmpty) {
-      _selectedCategory = widget.preSelectedCategories!.first;
-    } else if (widget.preSelectedCategory != null) {
-      _selectedCategory = widget.preSelectedCategory;
+    if (widget.existingEntry != null) {
+      _initializeFromExistingEntry();
+    } else {
+      _initializeDefaultFields();
+    }
+
+    // Set pre-selected category if provided (for new entries)
+    if (widget.existingEntry == null) {
+      if (widget.preSelectedCategories != null &&
+          widget.preSelectedCategories!.isNotEmpty) {
+        _selectedCategory = widget.preSelectedCategories!.first;
+      } else if (widget.preSelectedCategory != null) {
+        _selectedCategory = widget.preSelectedCategory;
+      }
     }
   }
 
@@ -103,6 +114,39 @@ class _AddEntryDialogState extends State<AddEntryDialog>
         hint: 'Enter your password',
       ),
     ];
+  }
+
+  void _initializeFromExistingEntry() {
+    final entry = widget.existingEntry!;
+
+    // Pre-fill form fields
+    _titleController.text = entry.title;
+    _descriptionController.text = entry.description ?? '';
+    _notesController.text = entry.notes ?? '';
+
+    // Set entry properties
+    _selectedCategory = entry.category;
+    _selectedTags = List<String>.from(entry.tags);
+    _selectedColor = entry.color;
+
+    // Copy custom fields
+    _customFields = entry.customFields
+        .map(
+          (field) => CustomField(
+            label: field.label,
+            value: field.value,
+            type: field.type,
+            isRequired: field.isRequired,
+            isHidden: field.isHidden,
+            hint: field.hint,
+          ),
+        )
+        .toList();
+
+    // If no custom fields exist, add default ones
+    if (_customFields.isEmpty) {
+      _initializeDefaultFields();
+    }
   }
 
   @override
@@ -198,7 +242,7 @@ class _AddEntryDialogState extends State<AddEntryDialog>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Add New Entry',
+                  widget.existingEntry != null ? 'Edit Entry' : 'Add New Entry',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: Theme.of(context).colorScheme.onSurface,
@@ -582,53 +626,69 @@ class _AddEntryDialogState extends State<AddEntryDialog>
       return;
     }
 
-    // Validate password strength for any password fields that have values
-    final passwordFields = _customFields.where(
-      (f) => f.type == FieldType.password && f.value.trim().isNotEmpty,
-    );
-
-    for (final field in passwordFields) {
-      final password = field.value.trim();
-      if (password.length < 8) {
-        _showSnackBar(
-          'Password should be at least 8 characters long',
-          isError: true,
-        );
-        return;
-      }
-    }
-
     setState(() {
       _isSaving = true;
     });
 
     try {
-      final entry = PasswordEntry(
-        id: 'entry_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(1000)}',
-        title: _titleController.text.trim(),
-        description: _descriptionController.text.trim().isEmpty
-            ? null
-            : _descriptionController.text.trim(),
-        customFields: _customFields,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-        category: _selectedCategory,
-        color: _selectedColor,
-        notes: _notesController.text.trim().isEmpty
-            ? null
-            : _notesController.text.trim(),
-        tags: _selectedTags,
-      );
+      final PasswordEntry entry;
+
+      if (widget.existingEntry != null) {
+        // Update existing entry
+        entry = widget.existingEntry!.copyWith(
+          title: _titleController.text.trim(),
+          description: _descriptionController.text.trim().isEmpty
+              ? null
+              : _descriptionController.text.trim(),
+          customFields: _customFields,
+          updatedAt: DateTime.now(),
+          category: _selectedCategory,
+          color: _selectedColor,
+          notes: _notesController.text.trim().isEmpty
+              ? null
+              : _notesController.text.trim(),
+          tags: _selectedTags,
+        );
+      } else {
+        // Create new entry
+        entry = PasswordEntry(
+          id: 'entry_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(1000)}',
+          title: _titleController.text.trim(),
+          description: _descriptionController.text.trim().isEmpty
+              ? null
+              : _descriptionController.text.trim(),
+          customFields: _customFields,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          category: _selectedCategory,
+          color: _selectedColor,
+          notes: _notesController.text.trim().isEmpty
+              ? null
+              : _notesController.text.trim(),
+          tags: _selectedTags,
+        );
+      }
 
       await _databaseService.savePasswordEntry(entry);
 
       if (mounted) {
-        _showSnackBar('Password entry saved successfully!');
+        final isUpdate = widget.existingEntry != null;
+        _showSnackBar(
+          isUpdate
+              ? 'Password entry updated successfully!'
+              : 'Password entry saved successfully!',
+        );
 
         // Add haptic feedback
         HapticFeedback.lightImpact();
 
-        widget.onEntryAdded?.call();
+        // Call appropriate callback
+        if (isUpdate) {
+          widget.onEntryUpdated?.call();
+        } else {
+          widget.onEntryAdded?.call();
+        }
+
         _closeDialog();
       }
     } catch (e) {

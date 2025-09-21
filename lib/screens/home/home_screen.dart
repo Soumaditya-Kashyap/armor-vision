@@ -3,6 +3,7 @@ import '../../models/password_entry.dart';
 import '../../services/database_service.dart';
 import '../../utils/constants.dart';
 import '../../widgets/password_entry_card.dart';
+import '../../widgets/dialogs/password_entry_detail_dialog.dart';
 import '../category_selection_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -84,6 +85,9 @@ class _HomeScreenState extends State<HomeScreen> {
       }).toList();
     }
 
+    // Sort by latest first (newest to oldest)
+    entries.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+
     return entries;
   }
 
@@ -99,6 +103,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 true);
       }).toList();
     }
+
+    // Sort by latest first (newest to oldest)
+    entries.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
 
     return entries;
   }
@@ -593,11 +600,14 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _openEntryDetails(PasswordEntry entry) {
-    // TODO: Navigate to entry details
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Opening ${entry.title}'),
-        duration: const Duration(seconds: 1),
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => PasswordEntryDetailDialog(
+        entry: entry,
+        onEntryUpdated: () {
+          _loadData(); // Refresh the entries list
+        },
       ),
     );
   }
