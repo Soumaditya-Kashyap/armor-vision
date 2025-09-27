@@ -106,13 +106,20 @@ class _PasswordEntryDetailDialogState extends State<PasswordEntryDetailDialog>
                     _buildHeader(colorScheme, theme),
                     Flexible(
                       child: SingleChildScrollView(
-                        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                        padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _buildEntryInfo(theme, colorScheme),
                             const SizedBox(height: 24),
                             _buildFieldsList(theme, colorScheme),
+
+                            // Notes section - only show if notes exist
+                            if (widget.entry.notes != null &&
+                                widget.entry.notes!.trim().isNotEmpty) ...[
+                              const SizedBox(height: 24),
+                              _buildNotesSection(theme, colorScheme),
+                            ],
                           ],
                         ),
                       ),
@@ -606,6 +613,53 @@ class _PasswordEntryDetailDialogState extends State<PasswordEntryDetailDialog>
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
+  Widget _buildNotesSection(ThemeData theme, ColorScheme colorScheme) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceVariant.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.notes_rounded, size: 18, color: colorScheme.primary),
+              const SizedBox(width: 8),
+              Text(
+                'Notes',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: colorScheme.surface,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
+            ),
+            child: Text(
+              widget.entry.notes!,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurface,
+                height: 1.5,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
