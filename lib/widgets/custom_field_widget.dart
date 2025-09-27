@@ -26,14 +26,17 @@ class CustomFieldWidget extends StatefulWidget {
 class _CustomFieldWidgetState extends State<CustomFieldWidget>
     with TickerProviderStateMixin {
   late TextEditingController _controller;
+  late FocusNode _focusNode;
   late AnimationController _removeButtonAnimationController;
   late Animation<double> _removeButtonAnimation;
   bool _obscureText = true;
+  bool _isUserTyping = false;
 
   @override
   void initState() {
     super.initState();
     _controller = TextEditingController(text: widget.field.value);
+    _focusNode = FocusNode();
     _obscureText =
         widget.field.type == FieldType.password && !widget.isPasswordVisible;
 
@@ -57,7 +60,11 @@ class _CustomFieldWidgetState extends State<CustomFieldWidget>
   @override
   void didUpdateWidget(CustomFieldWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.field.value != widget.field.value) {
+    // Only update controller text if the field value changed from external source
+    // and user is not currently typing (to prevent cursor jumping)
+    if (oldWidget.field.value != widget.field.value &&
+        !_isUserTyping &&
+        !_focusNode.hasFocus) {
       _controller.text = widget.field.value;
     }
     if (oldWidget.isPasswordVisible != widget.isPasswordVisible) {
@@ -232,6 +239,7 @@ class _CustomFieldWidgetState extends State<CustomFieldWidget>
   Widget _buildTextField() {
     return TextFormField(
       controller: _controller,
+      focusNode: _focusNode,
       obscureText: _obscureText,
       keyboardType: _getKeyboardType(),
       textInputAction: TextInputAction.next,
@@ -254,8 +262,15 @@ class _CustomFieldWidgetState extends State<CustomFieldWidget>
         return _validateFieldType(value);
       },
       onChanged: (value) {
+        _isUserTyping = true;
         final updatedField = widget.field.copyWith(value: value);
         widget.onFieldChanged(updatedField);
+        // Reset typing state after a short delay
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted) {
+            _isUserTyping = false;
+          }
+        });
       },
     );
   }
@@ -474,6 +489,7 @@ class _CustomFieldWidgetState extends State<CustomFieldWidget>
   @override
   void dispose() {
     _controller.dispose();
+    _focusNode.dispose();
     _removeButtonAnimationController.dispose();
     super.dispose();
   }
