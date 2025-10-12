@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
-import '../services/simple_database_service.dart';
+import '../services/database_service.dart';
 import '../services/encryption_service.dart';
 import '../utils/constants.dart';
 import 'auth/auth_screen.dart';
