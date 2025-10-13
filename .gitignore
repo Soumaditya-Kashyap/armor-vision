@@ -46,3 +46,11 @@ app.*.map.json
 PLATFORM_FIXES.md
 dev.bat
 DEV_GUIDE.md
+MODULARIZATION_COMPLETE.md
+MODULARIZATION_PLAN.md
+OVERFLOW_FIX.md
+PHASE_2_COMPLETE.md
+PHASE_3_HOME_COMPLETE.md
+PHASE_4_SETTINGS_COMPLETE.md
+test_preset_categories.dart
+lib/widgets/dialogs/components/README.md
