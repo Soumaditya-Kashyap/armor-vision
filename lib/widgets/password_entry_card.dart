@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../models/password_entry.dart';
 import '../utils/constants.dart';
 
@@ -15,6 +16,32 @@ class PasswordEntryCard extends StatelessWidget {
     this.onFavoriteToggle,
     this.isListView = false,
   });
+
+  /// Get the icon for this entry based on its category
+  IconData _getEntryIcon() {
+    // If entry has a category, try to get the actual category icon from database
+    if (entry.category != null && entry.category!.isNotEmpty) {
+      try {
+        // Access the categories box directly (synchronous)
+        final categoriesBox = Hive.box<Category>('categories');
+
+        // Find the matching category
+        final category = categoriesBox.values.firstWhere(
+          (cat) => cat.name.toLowerCase() == entry.category!.toLowerCase(),
+          orElse: () => categoriesBox.values.first, // fallback
+        );
+
+        // Use the category's iconName to get the actual icon
+        return AppHelpers.getIconFromName(category.iconName);
+      } catch (e) {
+        // If database lookup fails, use name-based matching as fallback
+        return AppHelpers.getCategoryIcon(entry.category);
+      }
+    }
+
+    // Fallback to the smart detection method
+    return AppHelpers.getEntryIcon(entry);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,9 +67,26 @@ class PasswordEntryCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Header with title and favorite
+              // Header with icon, title and favorite
               Row(
                 children: [
+                  // Category icon
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: AppHelpers.getEntryColor(
+                        entry.color,
+                      ).withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      _getEntryIcon(),
+                      color: AppHelpers.getEntryColor(entry.color),
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   // Color indicator
                   Container(
                     width: 3,
@@ -177,7 +221,7 @@ class PasswordEntryCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              // Color indicator and icon
+              // Dynamic icon based on category
               Container(
                 width: 48,
                 height: 48,
@@ -188,7 +232,7 @@ class PasswordEntryCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
-                  Icons.security_rounded,
+                  _getEntryIcon(),
                   color: AppHelpers.getEntryColor(entry.color),
                   size: 24,
                 ),

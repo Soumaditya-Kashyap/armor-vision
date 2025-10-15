@@ -280,7 +280,8 @@ class AppValidators {
     }
 
     final urlRegex = RegExp(
-        r'^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$');
+      r'^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$',
+    );
 
     if (!urlRegex.hasMatch(value.trim())) {
       return 'Please enter a valid URL';
@@ -395,9 +396,252 @@ class AppHelpers {
     return AppConstants.entryColors[entryColor] ?? Colors.blue;
   }
 
+  /// Get icon based on category name
+  static IconData getCategoryIcon(String? categoryName) {
+    if (categoryName == null || categoryName.isEmpty) {
+      return Icons.security_rounded; // Default icon
+    }
+
+    // Convert to lowercase for case-insensitive matching
+    final category = categoryName.toLowerCase();
+
+    // Match category names to appropriate icons
+    // Email & Communication
+    if (category.contains('email') ||
+        category.contains('mail') ||
+        category.contains('gmail') ||
+        category.contains('outlook') ||
+        category.contains('yahoo') ||
+        category.contains('proton')) {
+      return Icons.email_rounded;
+    }
+    // Social Media
+    else if (category.contains('social') ||
+        category.contains('facebook') ||
+        category.contains('twitter') ||
+        category.contains('instagram') ||
+        category.contains('linkedin') ||
+        category.contains('tiktok') ||
+        category.contains('snapchat') ||
+        category.contains('reddit') ||
+        category.contains('whatsapp') ||
+        category.contains('telegram')) {
+      return Icons.people_rounded;
+    }
+    // Banking & Finance
+    else if (category.contains('bank') ||
+        category.contains('finance') ||
+        category.contains('payment') ||
+        category.contains('card') ||
+        category.contains('paypal') ||
+        category.contains('stripe') ||
+        category.contains('wallet')) {
+      return Icons.account_balance_rounded;
+    }
+    // Shopping & E-commerce
+    else if (category.contains('shop') ||
+        category.contains('store') ||
+        category.contains('ecommerce') ||
+        category.contains('amazon') ||
+        category.contains('ebay') ||
+        category.contains('walmart')) {
+      return Icons.shopping_cart_rounded;
+    }
+    // Work & Business
+    else if (category.contains('work') ||
+        category.contains('office') ||
+        category.contains('business') ||
+        category.contains('enterprise') ||
+        category.contains('company') ||
+        category.contains('corporate')) {
+      return Icons.work_rounded;
+    }
+    // Entertainment & Streaming
+    else if (category.contains('entertainment') ||
+        category.contains('movie') ||
+        category.contains('music') ||
+        category.contains('streaming') ||
+        category.contains('netflix') ||
+        category.contains('spotify') ||
+        category.contains('youtube') ||
+        category.contains('hulu') ||
+        category.contains('disney')) {
+      return Icons.movie_rounded;
+    }
+    // Travel & Transportation
+    else if (category.contains('travel') ||
+        category.contains('flight') ||
+        category.contains('hotel') ||
+        category.contains('booking') ||
+        category.contains('airbnb') ||
+        category.contains('uber')) {
+      return Icons.flight_rounded;
+    }
+    // Education & Learning
+    else if (category.contains('education') ||
+        category.contains('school') ||
+        category.contains('university') ||
+        category.contains('learning') ||
+        category.contains('course') ||
+        category.contains('study')) {
+      return Icons.school_rounded;
+    }
+    // Health & Medical
+    else if (category.contains('health') ||
+        category.contains('medical') ||
+        category.contains('hospital') ||
+        category.contains('doctor') ||
+        category.contains('fitness') ||
+        category.contains('wellness')) {
+      return Icons.local_hospital_rounded;
+    }
+    // Gaming
+    else if (category.contains('game') ||
+        category.contains('gaming') ||
+        category.contains('xbox') ||
+        category.contains('playstation') ||
+        category.contains('steam') ||
+        category.contains('epic')) {
+      return Icons.sports_esports_rounded;
+    }
+    // Cloud Storage & Files
+    else if (category.contains('cloud') ||
+        category.contains('drive') ||
+        category.contains('storage') ||
+        category.contains('dropbox') ||
+        category.contains('onedrive') ||
+        category.contains('icloud')) {
+      return Icons.cloud_rounded;
+    }
+    // Documents & Files
+    else if (category.contains('document') ||
+        category.contains('file') ||
+        category.contains('pdf') ||
+        category.contains('docs')) {
+      return Icons.description_rounded;
+    }
+    // Network & Internet
+    else if (category.contains('wifi') ||
+        category.contains('network') ||
+        category.contains('internet') ||
+        category.contains('router')) {
+      return Icons.wifi_rounded;
+    }
+    // Phone & Mobile
+    else if (category.contains('phone') ||
+        category.contains('mobile') ||
+        category.contains('cellular')) {
+      return Icons.phone_android_rounded;
+    }
+    // General & Miscellaneous
+    else if (category.contains('general') ||
+        category.contains('misc') ||
+        category.contains('other')) {
+      return Icons.apps_rounded; // Changed from folder to apps icon
+    } else {
+      // Default fallback
+      return Icons.security_rounded;
+    }
+  }
+
+  /// Get icon for entry with multiple categories (via tags)
+  /// If entry has multiple categories, returns an icon that best represents the combination
+  static IconData getEntryIcon(PasswordEntry entry) {
+    // Primary: Use category if available
+    if (entry.category != null && entry.category!.isNotEmpty) {
+      // Try to get icon from category object if we have access to database
+      // For now, use the name-based matching as fallback
+      return getCategoryIcon(entry.category);
+    }
+
+    // Secondary: Check tags for category hints
+    if (entry.tags.isNotEmpty) {
+      // Prioritize certain categories
+      final tags = entry.tags.map((t) => t.toLowerCase()).toList();
+
+      // Check for high-priority categories first
+      if (tags.any((t) => t.contains('bank') || t.contains('finance'))) {
+        return Icons.account_balance_rounded;
+      }
+      if (tags.any((t) => t.contains('work') || t.contains('office'))) {
+        return Icons.work_rounded;
+      }
+      if (tags.any((t) => t.contains('social'))) {
+        return Icons.people_rounded;
+      }
+      if (tags.any((t) => t.contains('shop') || t.contains('store'))) {
+        return Icons.shopping_cart_rounded;
+      }
+
+      // If multiple different categories, use a combined icon
+      final hasMultipleCategories = tags.length > 2;
+      if (hasMultipleCategories) {
+        return Icons.category_rounded; // Indicates multiple categories
+      }
+
+      // Try to get icon from first tag
+      return getCategoryIcon(entry.tags.first);
+    }
+
+    // Fallback: Default security icon
+    return Icons.security_rounded;
+  }
+
+  /// Get icon from iconName string (used by categories)
+  /// This maps the icon names stored in Category objects to actual IconData
+  static IconData getIconFromName(String iconName) {
+    switch (iconName.toLowerCase()) {
+      case 'people':
+        return Icons.people_rounded;
+      case 'account_balance':
+        return Icons.account_balance_rounded;
+      case 'shopping_cart':
+        return Icons.shopping_cart_rounded;
+      case 'work':
+        return Icons.work_rounded;
+      case 'movie':
+        return Icons.movie_rounded;
+      case 'airplanemode_active':
+      case 'flight':
+        return Icons.flight_rounded;
+      case 'school':
+        return Icons.school_rounded;
+      case 'folder':
+        return Icons.folder_rounded;
+      case 'label':
+      case 'label_outline':
+        return Icons.label_rounded;
+      case 'email':
+      case 'mail':
+        return Icons.email_rounded;
+      case 'phone':
+      case 'phone_android':
+        return Icons.phone_android_rounded;
+      case 'cloud':
+        return Icons.cloud_rounded;
+      case 'game':
+      case 'sports_esports':
+        return Icons.sports_esports_rounded;
+      case 'description':
+      case 'document':
+        return Icons.description_rounded;
+      case 'wifi':
+        return Icons.wifi_rounded;
+      case 'local_hospital':
+      case 'health':
+        return Icons.local_hospital_rounded;
+      case 'security':
+      default:
+        return Icons.security_rounded;
+    }
+  }
+
   /// Copy text to clipboard
-  static void copyToClipboard(BuildContext context, String text,
-      {String? successMessage}) {
+  static void copyToClipboard(
+    BuildContext context,
+    String text, {
+    String? successMessage,
+  }) {
     // Implementation will be added when we import services
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
