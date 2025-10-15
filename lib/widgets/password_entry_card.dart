@@ -43,19 +43,76 @@ class PasswordEntryCard extends StatelessWidget {
     return AppHelpers.getEntryIcon(entry);
   }
 
+  /// Get the color for this entry based on its category
+  Color _getEntryColor(BuildContext context) {
+    // If entry has a category, try to get the actual category color from database
+    if (entry.category != null && entry.category!.isNotEmpty) {
+      try {
+        // Access the categories box directly (synchronous)
+        final categoriesBox = Hive.box<Category>('categories');
+
+        // Find the matching category
+        final category = categoriesBox.values.firstWhere(
+          (cat) => cat.name.toLowerCase() == entry.category!.toLowerCase(),
+          orElse: () => categoriesBox.values.first, // fallback
+        );
+
+        // Convert EntryColor enum to actual Color
+        return _convertEntryColor(category.color);
+      } catch (e) {
+        // If database lookup fails, use default blue
+        return Theme.of(context).colorScheme.primary;
+      }
+    }
+
+    // Fallback to default blue
+    return Theme.of(context).colorScheme.primary;
+  }
+
+  /// Convert EntryColor enum to Material Color with proper shades
+  Color _convertEntryColor(EntryColor entryColor) {
+    switch (entryColor) {
+      case EntryColor.red:
+        return Colors.red.shade700; // Deep red for Gmail
+      case EntryColor.green:
+        return Colors.green.shade700; // Deep green for Work
+      case EntryColor.teal:
+        return Colors.teal.shade600; // Teal green for Banking
+      case EntryColor.blue:
+        return Colors.blue.shade700; // Deep blue for General
+      case EntryColor.purple:
+        return Colors.purple.shade600; // Purple for Social/Entertainment
+      case EntryColor.orange:
+        return Colors.orange.shade700; // Orange
+      case EntryColor.amber:
+        return Colors.amber.shade700; // Amber/Yellow for Shopping
+      case EntryColor.pink:
+        return Colors.pink.shade600; // Pink
+      case EntryColor.indigo:
+        return Colors.indigo.shade700; // Indigo
+      case EntryColor.gray:
+        return Colors.grey.shade600; // Gray
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final entryColor = _getEntryColor(context);
 
     if (isListView) {
-      return _buildListCard(theme, colorScheme);
+      return _buildListCard(theme, colorScheme, entryColor);
     } else {
-      return _buildGridCard(theme, colorScheme);
+      return _buildGridCard(theme, colorScheme, entryColor);
     }
   }
 
-  Widget _buildGridCard(ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildGridCard(
+    ThemeData theme,
+    ColorScheme colorScheme,
+    Color entryColor,
+  ) {
     return Card(
       elevation: 2,
       child: InkWell(
@@ -75,16 +132,10 @@ class PasswordEntryCard extends StatelessWidget {
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      color: AppHelpers.getEntryColor(
-                        entry.color,
-                      ).withOpacity(0.15),
+                      color: entryColor.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(
-                      _getEntryIcon(),
-                      color: AppHelpers.getEntryColor(entry.color),
-                      size: 18,
-                    ),
+                    child: Icon(_getEntryIcon(), color: entryColor, size: 18),
                   ),
                   const SizedBox(width: 8),
                   // Color indicator
@@ -92,7 +143,7 @@ class PasswordEntryCard extends StatelessWidget {
                     width: 3,
                     height: 20,
                     decoration: BoxDecoration(
-                      color: AppHelpers.getEntryColor(entry.color),
+                      color: entryColor,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -174,15 +225,13 @@ class PasswordEntryCard extends StatelessWidget {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: AppHelpers.getEntryColor(
-                      entry.color,
-                    ).withOpacity(0.15),
+                    color: entryColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     entry.category!.toUpperCase(),
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: AppHelpers.getEntryColor(entry.color),
+                      color: entryColor,
                       fontWeight: FontWeight.w600,
                       fontSize: 9,
                     ),
@@ -211,7 +260,11 @@ class PasswordEntryCard extends StatelessWidget {
     );
   }
 
-  Widget _buildListCard(ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildListCard(
+    ThemeData theme,
+    ColorScheme colorScheme,
+    Color entryColor,
+  ) {
     return Card(
       elevation: 1,
       child: InkWell(
@@ -226,16 +279,10 @@ class PasswordEntryCard extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: AppHelpers.getEntryColor(
-                    entry.color,
-                  ).withOpacity(0.15),
+                  color: entryColor.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  _getEntryIcon(),
-                  color: AppHelpers.getEntryColor(entry.color),
-                  size: 24,
-                ),
+                child: Icon(_getEntryIcon(), color: entryColor, size: 24),
               ),
 
               const SizedBox(width: 16),
