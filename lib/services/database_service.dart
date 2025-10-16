@@ -1,6 +1,7 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/password_entry.dart';
 import '../models/app_settings.dart';
+import '../utils/armor_themes.dart';
 import 'encryption_service.dart';
 
 class DatabaseService {
@@ -55,6 +56,9 @@ class DatabaseService {
       }
       if (!Hive.isAdapterRegistered(8)) {
         Hive.registerAdapter(SecurityLevelAdapter());
+      }
+      if (!Hive.isAdapterRegistered(9)) {
+        Hive.registerAdapter(ArmorThemeModeAdapter());
       }
 
       // Initialize encryption service
