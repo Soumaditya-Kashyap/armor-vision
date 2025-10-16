@@ -27,6 +27,10 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   int _currentTabIndex = 0;
 
+  // Selection mode state
+  bool _isSelectionMode = false;
+  final Set<String> _selectedEntryIds = {};
+
   @override
   void initState() {
     super.initState();
@@ -125,6 +129,9 @@ class _HomeScreenState extends State<HomeScreen> {
             // App Bar
             HomeAppBar(
               totalEntries: _allEntries.length,
+              isSelectionMode: _isSelectionMode,
+              selectedCount: _selectedEntryIds.length,
+              onDeleteTap: _confirmDelete,
               onSettingsTap: () {
                 Navigator.of(context).pushNamed('/settings');
               },
@@ -175,13 +182,19 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         EntriesList(
                           entries: _filteredEntries,
-                          onEntryTap: _openEntryDetails,
+                          onEntryTap: _handleEntryTap,
+                          onEntryLongPress: _handleEntryLongPress,
                           onFavoriteToggle: _toggleFavorite,
+                          selectedEntryIds: _selectedEntryIds,
+                          isSelectionMode: _isSelectionMode,
                         ),
                         EntriesList(
                           entries: _filteredFavorites,
-                          onEntryTap: _openEntryDetails,
+                          onEntryTap: _handleEntryTap,
+                          onEntryLongPress: _handleEntryLongPress,
                           onFavoriteToggle: _toggleFavorite,
+                          selectedEntryIds: _selectedEntryIds,
+                          isSelectionMode: _isSelectionMode,
                           emptyStateTitle: 'No Favorites Yet',
                           emptyStateSubtitle:
                               'Mark your most important passwords as favorites by tapping the heart icon. They\'ll appear here for quick access.',
@@ -216,6 +229,95 @@ class _HomeScreenState extends State<HomeScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
+  }
+
+  // Selection mode handlers
+  void _handleEntryTap(PasswordEntry entry) {
+    if (_isSelectionMode) {
+      _toggleSelection(entry);
+    } else {
+      _openEntryDetails(entry);
+    }
+  }
+
+  void _handleEntryLongPress(PasswordEntry entry) {
+    if (!_isSelectionMode) {
+      setState(() {
+        _isSelectionMode = true;
+        _selectedEntryIds.add(entry.id);
+      });
+    } else {
+      _toggleSelection(entry);
+    }
+  }
+
+  void _toggleSelection(PasswordEntry entry) {
+    setState(() {
+      if (_selectedEntryIds.contains(entry.id)) {
+        _selectedEntryIds.remove(entry.id);
+        // Exit selection mode if no entries selected
+        if (_selectedEntryIds.isEmpty) {
+          _isSelectionMode = false;
+        }
+      } else {
+        _selectedEntryIds.add(entry.id);
+      }
+    });
+  }
+
+  void _cancelSelection() {
+    setState(() {
+      _isSelectionMode = false;
+      _selectedEntryIds.clear();
+    });
+  }
+
+  Future<void> _confirmDelete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) =>
+          _DeleteConfirmationDialog(count: _selectedEntryIds.length),
+    );
+
+    if (confirmed == true) {
+      await _deleteSelectedEntries();
+    }
+  }
+
+  Future<void> _deleteSelectedEntries() async {
+    try {
+      // Delete each selected entry
+      for (final id in _selectedEntryIds) {
+        await _databaseService.deletePasswordEntry(id);
+      }
+
+      // Show success message
+      final count = _selectedEntryIds.length;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Deleted $count ${count == 1 ? 'entry' : 'entries'} successfully',
+            ),
+            backgroundColor: Colors.green.shade700,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+
+      // Exit selection mode and refresh
+      _cancelSelection();
+      await _loadData();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete entries: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
   }
 
   void _openEntryDetails(PasswordEntry entry) {
@@ -276,5 +378,120 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     super.dispose();
+  }
+}
+
+// Delete Confirmation Dialog
+class _DeleteConfirmationDialog extends StatelessWidget {
+  final int count;
+
+  const _DeleteConfirmationDialog({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+      elevation: 8,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Warning Icon
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.delete_outline_rounded,
+                size: 32,
+                color: Colors.red.shade700,
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Title
+            Text(
+              'Delete ${count == 1 ? 'Entry' : 'Entries'}?',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+
+            // Message
+            Text(
+              count == 1
+                  ? 'Are you sure you want to permanently delete this entry? This action cannot be undone.'
+                  : 'Are you sure you want to permanently delete $count entries? This action cannot be undone.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.7),
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+
+            // Action Buttons
+            Row(
+              children: [
+                // Cancel Button
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      side: BorderSide(color: colorScheme.outline, width: 1.5),
+                    ),
+                    child: Text(
+                      'Cancel',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+
+                // Delete Button
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      backgroundColor: Colors.red.shade700,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      'Delete',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

@@ -9,13 +9,19 @@ class EntriesList extends StatelessWidget {
   final String? emptyStateSubtitle;
   final IconData? emptyStateIcon;
   final Function(PasswordEntry) onEntryTap;
+  final Function(PasswordEntry) onEntryLongPress;
   final Function(PasswordEntry) onFavoriteToggle;
+  final Set<String> selectedEntryIds;
+  final bool isSelectionMode;
 
   const EntriesList({
     super.key,
     required this.entries,
     required this.onEntryTap,
+    required this.onEntryLongPress,
     required this.onFavoriteToggle,
+    required this.selectedEntryIds,
+    required this.isSelectionMode,
     this.isEmptyState = false,
     this.emptyStateTitle,
     this.emptyStateSubtitle,
@@ -32,13 +38,19 @@ class EntriesList extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       itemCount: entries.length,
       itemBuilder: (context, index) {
+        final entry = entries[index];
+        final isSelected = selectedEntryIds.contains(entry.id);
+
         return Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: PasswordEntryCard(
-            entry: entries[index],
+            entry: entry,
             isListView: true,
-            onTap: () => onEntryTap(entries[index]),
-            onFavoriteToggle: () => onFavoriteToggle(entries[index]),
+            isSelected: isSelected,
+            isSelectionMode: isSelectionMode,
+            onTap: () => onEntryTap(entry),
+            onLongPress: () => onEntryLongPress(entry),
+            onFavoriteToggle: () => onFavoriteToggle(entry),
           ),
         );
       },

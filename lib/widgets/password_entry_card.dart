@@ -6,15 +6,21 @@ import '../utils/constants.dart';
 class PasswordEntryCard extends StatelessWidget {
   final PasswordEntry entry;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
   final VoidCallback? onFavoriteToggle;
   final bool isListView;
+  final bool isSelected;
+  final bool isSelectionMode;
 
   const PasswordEntryCard({
     super.key,
     required this.entry,
     this.onTap,
+    this.onLongPress,
     this.onFavoriteToggle,
     this.isListView = false,
+    this.isSelected = false,
+    this.isSelectionMode = false,
   });
 
   /// Get the icon for this entry based on its category
@@ -114,148 +120,199 @@ class PasswordEntryCard extends StatelessWidget {
     Color entryColor,
   ) {
     return Card(
-      elevation: 2,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Header with icon, title and favorite
-              Row(
-                children: [
-                  // Category icon
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: entryColor.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(8),
+      elevation: isSelected ? 8 : 2,
+      child: Stack(
+        children: [
+          InkWell(
+            onTap: onTap,
+            onLongPress: onLongPress,
+            borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
+                border: isSelected
+                    ? Border.all(color: colorScheme.primary, width: 2)
+                    : null,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header with icon, title and favorite
+                    Row(
+                      children: [
+                        // Category icon
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: entryColor.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            _getEntryIcon(),
+                            color: entryColor,
+                            size: 18,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // Color indicator
+                        Container(
+                          width: 3,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            color: entryColor,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            entry.displayTitle,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: colorScheme.onSurface,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        // Favorite button
+                        InkWell(
+                          onTap: onFavoriteToggle,
+                          borderRadius: BorderRadius.circular(16),
+                          child: Padding(
+                            padding: const EdgeInsets.all(2),
+                            child: Icon(
+                              entry.isFavorite
+                                  ? Icons.favorite_rounded
+                                  : Icons.favorite_border_rounded,
+                              size: 16,
+                              color: entry.isFavorite
+                                  ? Colors.red
+                                  : colorScheme.onSurface.withOpacity(0.6),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    child: Icon(_getEntryIcon(), color: entryColor, size: 18),
-                  ),
-                  const SizedBox(width: 8),
-                  // Color indicator
-                  Container(
-                    width: 3,
-                    height: 20,
-                    decoration: BoxDecoration(
-                      color: entryColor,
-                      borderRadius: BorderRadius.circular(2),
+
+                    const SizedBox(height: 8),
+
+                    // Description (only if short)
+                    if (entry.description != null &&
+                        entry.description!.isNotEmpty) ...[
+                      Text(
+                        entry.description!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurface.withOpacity(0.7),
+                          fontSize: 12,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+
+                    // Field count
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.key_rounded,
+                          size: 14,
+                          color: colorScheme.onSurface.withOpacity(0.5),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${entry.customFields.length} ${entry.customFields.length == 1 ? 'field' : 'fields'}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurface.withOpacity(0.6),
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      entry.displayTitle,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: colorScheme.onSurface,
+
+                    const SizedBox(height: 6),
+
+                    // Category badge (if available)
+                    if (entry.category != null) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: entryColor.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          entry.category!.toUpperCase(),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: entryColor,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 9,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                    ],
+
+                    // Bottom section - last modified
+                    const Spacer(),
+                    Text(
+                      'Modified ${AppHelpers.formatDate(entry.updatedAt)}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurface.withOpacity(0.5),
+                        fontSize: 10,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  // Favorite button
-                  InkWell(
-                    onTap: onFavoriteToggle,
-                    borderRadius: BorderRadius.circular(16),
-                    child: Padding(
-                      padding: const EdgeInsets.all(2),
-                      child: Icon(
-                        entry.isFavorite
-                            ? Icons.favorite_rounded
-                            : Icons.favorite_border_rounded,
-                        size: 16,
-                        color: entry.isFavorite
-                            ? Colors.red
-                            : colorScheme.onSurface.withOpacity(0.6),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 8),
-
-              // Description (only if short)
-              if (entry.description != null &&
-                  entry.description!.isNotEmpty) ...[
-                Text(
-                  entry.description!,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurface.withOpacity(0.7),
-                    fontSize: 12,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  ],
                 ),
-                const SizedBox(height: 8),
-              ],
-
-              // Field count
-              Row(
-                children: [
-                  Icon(
-                    Icons.key_rounded,
-                    size: 14,
-                    color: colorScheme.onSurface.withOpacity(0.5),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${entry.customFields.length} ${entry.customFields.length == 1 ? 'field' : 'fields'}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurface.withOpacity(0.6),
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
               ),
-
-              const SizedBox(height: 6),
-
-              // Category badge (if available)
-              if (entry.category != null) ...[
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: entryColor.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    entry.category!.toUpperCase(),
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: entryColor,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 9,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                  ),
-                ),
-                const SizedBox(height: 6),
-              ],
-
-              // Bottom section - last modified
-              const Spacer(),
-              Text(
-                'Modified ${AppHelpers.formatDate(entry.updatedAt)}',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: colorScheme.onSurface.withOpacity(0.5),
-                  fontSize: 10,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+            ),
           ),
-        ),
+          // Selection checkbox overlay
+          if (isSelectionMode)
+            Positioned(
+              top: 8,
+              right: 8,
+              child: AnimatedScale(
+                scale: isSelectionMode ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 200),
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? colorScheme.primary
+                        : colorScheme.surface,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected
+                          ? colorScheme.primary
+                          : colorScheme.outline,
+                      width: 2,
+                    ),
+                  ),
+                  child: isSelected
+                      ? Icon(
+                          Icons.check,
+                          size: 16,
+                          color: colorScheme.onPrimary,
+                        )
+                      : null,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -266,135 +323,195 @@ class PasswordEntryCard extends StatelessWidget {
     Color entryColor,
   ) {
     return Card(
-      elevation: 1,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              // Dynamic icon based on category
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: entryColor.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(_getEntryIcon(), color: entryColor, size: 24),
+      elevation: isSelected ? 4 : 1,
+      child: Stack(
+        children: [
+          InkWell(
+            onTap: onTap,
+            onLongPress: onLongPress,
+            borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
+                border: isSelected
+                    ? Border.all(color: colorScheme.primary, width: 2)
+                    : null,
               ),
-
-              const SizedBox(width: 16),
-
-              // Content
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
                   children: [
-                    // Title and favorite
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            entry.displayTitle,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: colorScheme.onSurface,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (entry.isFavorite) ...[
-                          const SizedBox(width: 8),
-                          Icon(
-                            Icons.favorite_rounded,
-                            size: 16,
-                            color: Colors.red,
-                          ),
-                        ],
-                      ],
-                    ),
-
-                    const SizedBox(height: 4),
-
-                    // Description or field info
-                    Text(
-                      entry.description?.isNotEmpty == true
-                          ? entry.description!
-                          : '${entry.customFields.length} ${entry.customFields.length == 1 ? 'field' : 'fields'}',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurface.withOpacity(0.7),
+                    // Dynamic icon based on category
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: entryColor.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      child: Icon(_getEntryIcon(), color: entryColor, size: 24),
                     ),
 
-                    const SizedBox(height: 4),
+                    const SizedBox(width: 16),
 
-                    // Category and date
-                    Row(
-                      children: [
-                        if (entry.category != null) ...[
-                          Flexible(
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppHelpers.getEntryColor(
-                                  entry.color,
-                                ).withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                entry.category!.toUpperCase(),
-                                style: theme.textTheme.labelSmall?.copyWith(
-                                  color: AppHelpers.getEntryColor(entry.color),
-                                  fontWeight: FontWeight.w600,
+                    // Content
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Title and favorite
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  entry.displayTitle,
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: colorScheme.onSurface,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
+                              if (entry.isFavorite) ...[
+                                const SizedBox(width: 8),
+                                Icon(
+                                  Icons.favorite_rounded,
+                                  size: 16,
+                                  color: Colors.red,
+                                ),
+                              ],
+                            ],
                           ),
-                          const SizedBox(width: 8),
-                        ],
-                        Expanded(
-                          child: Text(
-                            AppHelpers.formatDate(entry.updatedAt),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurface.withOpacity(0.5),
+
+                          const SizedBox(height: 4),
+
+                          // Description or field info
+                          Text(
+                            entry.description?.isNotEmpty == true
+                                ? entry.description!
+                                : '${entry.customFields.length} ${entry.customFields.length == 1 ? 'field' : 'fields'}',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurface.withOpacity(0.7),
                             ),
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                      ],
+
+                          const SizedBox(height: 4),
+
+                          // Category and date
+                          Row(
+                            children: [
+                              if (entry.category != null) ...[
+                                Flexible(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppHelpers.getEntryColor(
+                                        entry.color,
+                                      ).withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      entry.category!.toUpperCase(),
+                                      style: theme.textTheme.labelSmall
+                                          ?.copyWith(
+                                            color: AppHelpers.getEntryColor(
+                                              entry.color,
+                                            ),
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                              ],
+                              Expanded(
+                                child: Text(
+                                  AppHelpers.formatDate(entry.updatedAt),
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: colorScheme.onSurface.withOpacity(
+                                      0.5,
+                                    ),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
+
+                    // Action button
+                    if (!isSelectionMode)
+                      InkWell(
+                        onTap: onFavoriteToggle,
+                        borderRadius: BorderRadius.circular(20),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Icon(
+                            entry.isFavorite
+                                ? Icons.favorite_rounded
+                                : Icons.favorite_border_rounded,
+                            size: 20,
+                            color: entry.isFavorite
+                                ? Colors.red
+                                : colorScheme.onSurface.withOpacity(0.6),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
-
-              // Action button
-              InkWell(
-                onTap: onFavoriteToggle,
-                borderRadius: BorderRadius.circular(20),
-                child: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Icon(
-                    entry.isFavorite
-                        ? Icons.favorite_rounded
-                        : Icons.favorite_border_rounded,
-                    size: 20,
-                    color: entry.isFavorite
-                        ? Colors.red
-                        : colorScheme.onSurface.withOpacity(0.6),
+            ),
+          ),
+          // Selection checkbox overlay
+          if (isSelectionMode)
+            Positioned(
+              top: 12,
+              right: 12,
+              child: AnimatedScale(
+                scale: isSelectionMode ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 200),
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? colorScheme.primary
+                        : colorScheme.surface,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected
+                          ? colorScheme.primary
+                          : colorScheme.outline,
+                      width: 2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
+                  child: isSelected
+                      ? Icon(
+                          Icons.check,
+                          size: 18,
+                          color: colorScheme.onPrimary,
+                        )
+                      : null,
                 ),
               ),
-            ],
-          ),
-        ),
+            ),
+        ],
       ),
     );
   }
