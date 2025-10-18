@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/password_entry.dart';
 import '../utils/constants.dart';
+import '../utils/icon_helper.dart';
 
 class PasswordEntryCard extends StatelessWidget {
   final PasswordEntry entry;
@@ -38,7 +39,7 @@ class PasswordEntryCard extends StatelessWidget {
         );
 
         // Use the category's iconName to get the actual icon
-        return AppHelpers.getIconFromName(category.iconName);
+        return IconHelper.getIconData(category.iconName);
       } catch (e) {
         // If database lookup fails, use name-based matching as fallback
         return AppHelpers.getCategoryIcon(entry.category);

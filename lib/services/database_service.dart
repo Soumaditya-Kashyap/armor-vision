@@ -8,10 +8,12 @@ class DatabaseService {
   static const String _entriesBoxName = 'password_entries';
   static const String _settingsBoxName = 'app_settings';
   static const String _categoriesBoxName = 'categories';
+  static const String _deletedCategoriesBoxName = 'deleted_categories';
 
   late Box<PasswordEntry> _entriesBox;
   late Box<AppSettings> _settingsBox;
   late Box<Category> _categoriesBox;
+  late Box<String> _deletedCategoriesBox;
 
   final EncryptionService _encryptionService = EncryptionService();
   bool _isInitialized = false;
@@ -68,6 +70,9 @@ class DatabaseService {
       _entriesBox = await Hive.openBox<PasswordEntry>(_entriesBoxName);
       _settingsBox = await Hive.openBox<AppSettings>(_settingsBoxName);
       _categoriesBox = await Hive.openBox<Category>(_categoriesBoxName);
+      _deletedCategoriesBox = await Hive.openBox<String>(
+        _deletedCategoriesBoxName,
+      );
 
       // Initialize default data
       await _initializeDefaultData();
@@ -98,10 +103,15 @@ class DatabaseService {
     final presetCategories = _getPresetCategories();
 
     for (final presetCategory in presetCategories) {
+      // Skip if this category was explicitly deleted by user
+      if (_deletedCategoriesBox.containsKey(presetCategory.id)) {
+        continue;
+      }
+
       // Check if this preset category already exists
       final existingCategory = _categoriesBox.get(presetCategory.id);
       if (existingCategory == null) {
-        // Add missing preset category
+        // Add missing preset category (only if not deleted before)
         await _categoriesBox.put(presetCategory.id, presetCategory);
       } else {
         // Update existing preset category's icon if it's different
@@ -274,7 +284,11 @@ class DatabaseService {
   Future<void> deleteCategory(String categoryId) async {
     _ensureInitialized();
     try {
+      // Delete the category
       await _categoriesBox.delete(categoryId);
+
+      // Mark as deleted so it won't be re-created on app restart
+      await _deletedCategoriesBox.put(categoryId, categoryId);
     } catch (e) {
       throw DatabaseException('Failed to delete category: $e');
     }
