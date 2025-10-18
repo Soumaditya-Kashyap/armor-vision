@@ -12,8 +12,13 @@ import 'components/category_action_buttons.dart';
 
 class CategorySelectionScreen extends StatefulWidget {
   final VoidCallback? onEntryAdded;
+  final VoidCallback? onCategoriesChanged;
 
-  const CategorySelectionScreen({super.key, this.onEntryAdded});
+  const CategorySelectionScreen({
+    super.key,
+    this.onEntryAdded,
+    this.onCategoriesChanged,
+  });
 
   @override
   State<CategorySelectionScreen> createState() =>
@@ -243,6 +248,9 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
               _selectedCategories.add(newCategory.name);
             });
 
+            // Notify parent that categories have changed
+            widget.onCategoriesChanged?.call();
+
             _showSnackBar('Category created successfully!');
           } catch (e) {
             _showSnackBar('Error creating category: $e', isError: true);
@@ -328,6 +336,9 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
         _selectedCategories.clear();
         _isMultiSelectMode = false;
       });
+
+      // Notify parent that categories have changed
+      widget.onCategoriesChanged?.call();
 
       _showSnackBar(
         'Successfully deleted ${categoriesToDelete.length} ${categoriesToDelete.length == 1 ? 'category' : 'categories'}',

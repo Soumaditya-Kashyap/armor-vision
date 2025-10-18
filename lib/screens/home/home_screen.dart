@@ -371,6 +371,9 @@ class _HomeScreenState extends State<HomeScreen> {
         onEntryAdded: () {
           _loadData(); // Refresh the entries list
         },
+        onCategoriesChanged: () {
+          _loadData(); // Refresh when categories are added or deleted
+        },
       ),
     );
   }
