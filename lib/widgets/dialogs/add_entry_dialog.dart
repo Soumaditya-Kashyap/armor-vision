@@ -4,6 +4,7 @@ import 'dart:math';
 import '../../models/password_entry.dart';
 import '../../services/database_service.dart';
 import '../custom_field_widget.dart';
+import '../../widgets/category_selector.dart';
 
 class AddEntryDialog extends StatefulWidget {
   final VoidCallback? onEntryAdded;
@@ -159,9 +160,17 @@ class _AddEntryDialogState extends State<AddEntryDialog>
 
     // Calculate responsive dimensions
     final maxWidth = screenWidth < 600 ? screenWidth * 0.95 : 500.0;
-    final maxHeight = isLandscape
-        ? screenHeight * 0.85 - keyboardHeight
-        : screenHeight * 0.9 - keyboardHeight;
+    final safeVerticalPadding =
+        mediaQuery.padding.top + mediaQuery.padding.bottom;
+    final dialogVerticalPadding = (screenWidth < 400 ? 12.0 : 16.0) * 2;
+    final safeHeight = screenHeight - safeVerticalPadding;
+    final desiredHeight =
+        (isLandscape ? safeHeight * 0.85 : safeHeight * 0.9) -
+        keyboardHeight -
+        dialogVerticalPadding;
+    final clampedMaxHeight = desiredHeight.clamp(200.0, safeHeight);
+    final minDialogHeight = (isLandscape ? 240.0 : 320.0);
+    final clampedMinHeight = minDialogHeight.clamp(0.0, clampedMaxHeight);
 
     // Adjust padding for smaller screens
     final dialogPadding = screenWidth < 400 ? 12.0 : 16.0;
@@ -176,8 +185,8 @@ class _AddEntryDialogState extends State<AddEntryDialog>
           child: ConstrainedBox(
             constraints: BoxConstraints(
               maxWidth: maxWidth,
-              maxHeight: maxHeight,
-              minHeight: isLandscape ? 300 : 400,
+              maxHeight: clampedMaxHeight,
+              minHeight: clampedMinHeight,
             ),
             child: Container(
               decoration: BoxDecoration(
@@ -297,12 +306,38 @@ class _AddEntryDialogState extends State<AddEntryDialog>
           children: [
             _buildBasicFields(),
             SizedBox(height: spacingMedium),
+            _buildCategoryPicker(),
+            SizedBox(height: spacingMedium),
             _buildCustomFields(),
             SizedBox(height: spacingMedium),
             _buildNotesField(),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildCategoryPicker() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Category',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
+        const SizedBox(height: 8),
+        CategorySelector(
+          selectedCategory: _selectedCategory,
+          onCategorySelected: (id) {
+            setState(() {
+              _selectedCategory = id;
+            });
+          },
+        ),
+      ],
     );
   }
 

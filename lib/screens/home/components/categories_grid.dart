@@ -24,9 +24,9 @@ class CategoriesGrid extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 1.2,
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
+        childAspectRatio: 1.1,
       ),
       itemCount: categories.length,
       itemBuilder: (context, index) {
@@ -47,51 +47,79 @@ class CategoriesGrid extends StatelessWidget {
   ) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final baseColor = AppHelpers.getEntryColor(category.color);
 
-    return Card(
-      child: InkWell(
-        onTap: () => onCategoryTap(category),
-        borderRadius: BorderRadius.circular(12),
+    return InkWell(
+      onTap: () => onCategoryTap(category),
+      borderRadius: BorderRadius.circular(16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [baseColor.withOpacity(0.12), baseColor.withOpacity(0.04)],
+          ),
+          border: Border.all(color: baseColor.withOpacity(0.3)),
+        ),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: AppHelpers.getEntryColor(
-                    category.color,
-                  ).withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  _getCategoryIcon(category.iconName),
-                  color: AppHelpers.getEntryColor(category.color),
-                  size: 24,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Flexible(
-                child: Text(
-                  category.name,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+              Row(
+                children: [
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: baseColor.withOpacity(0.18),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(
+                      _getCategoryIcon(category.iconName),
+                      color: baseColor,
+                      size: 26,
+                    ),
                   ),
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 2,
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface.withOpacity(0.72),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: baseColor.withOpacity(0.25)),
+                    ),
+                    child: Text(
+                      '$entryCount',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: colorScheme.onSurface.withOpacity(0.8),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              Text(
+                category.name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 4),
-              Flexible(
-                child: Text(
-                  '$entryCount ${entryCount == 1 ? 'entry' : 'entries'}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurface.withOpacity(0.6),
-                  ),
-                  overflow: TextOverflow.ellipsis,
+              Text(
+                entryCount == 1 ? '1 entry' : '$entryCount entries',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurface.withOpacity(0.6),
                 ),
               ),
             ],
