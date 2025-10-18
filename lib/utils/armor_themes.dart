@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 part 'armor_themes.g.dart';
 
@@ -43,6 +44,9 @@ class ArmorThemes {
       seedColor: const Color(0xFF1976D2),
       brightness: Brightness.light,
     ),
+    textTheme: GoogleFonts.bricolageGrotesqueTextTheme(
+      ThemeData.light().textTheme,
+    ),
     appBarTheme: const AppBarTheme(
       centerTitle: true,
       elevation: 0,
@@ -69,6 +73,9 @@ class ArmorThemes {
     colorScheme: ColorScheme.fromSeed(
       seedColor: const Color(0xFF1976D2),
       brightness: Brightness.dark,
+    ),
+    textTheme: GoogleFonts.bricolageGrotesqueTextTheme(
+      ThemeData.dark().textTheme,
     ),
     appBarTheme: const AppBarTheme(
       centerTitle: true,
@@ -145,6 +152,9 @@ class ArmorThemes {
 
       // Surface tints with aurora glow
       surfaceTint: Color(0xFF00FFFF),
+    ),
+    textTheme: GoogleFonts.bricolageGrotesqueTextTheme(
+      ThemeData.dark().textTheme,
     ),
     appBarTheme: const AppBarTheme(
       centerTitle: true,

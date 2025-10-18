@@ -42,24 +42,17 @@ class HomeAppBar extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isSelectionMode ? 'Select Entries' : 'Armor',
+                  'Armor',
                   style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: colorScheme.onSurface,
                   ),
                 ),
                 Text(
-                  isSelectionMode
-                      ? '$selectedCount selected'
-                      : '$totalEntries entries',
+                  '$totalEntries entries',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: isSelectionMode
-                        ? colorScheme.primary
-                        : colorScheme.onSurface.withOpacity(0.6),
+                    color: colorScheme.onSurface.withOpacity(0.6),
                     fontSize: 12,
-                    fontWeight: isSelectionMode
-                        ? FontWeight.w600
-                        : FontWeight.normal,
                   ),
                 ),
               ],
@@ -115,7 +108,7 @@ class HomeAppBar extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
-                                  'Delete',
+                                  'Delete ($selectedCount)',
                                   style: theme.textTheme.titleSmall?.copyWith(
                                     color: Colors.white.withOpacity(
                                       selectedCount > 0 ? 1.0 : 0.5,
