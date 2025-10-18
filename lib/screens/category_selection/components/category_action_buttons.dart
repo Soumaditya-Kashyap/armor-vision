@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:iconsax/iconsax.dart';
 
 class CategoryActionButtons extends StatelessWidget {
   final bool isMultiSelectMode;
@@ -7,6 +8,7 @@ class CategoryActionButtons extends StatelessWidget {
   final VoidCallback onContinue;
   final VoidCallback onSingleSelectMode;
   final VoidCallback onCancel;
+  final VoidCallback? onDelete;
 
   const CategoryActionButtons({
     super.key,
@@ -16,6 +18,7 @@ class CategoryActionButtons extends StatelessWidget {
     required this.onContinue,
     required this.onSingleSelectMode,
     required this.onCancel,
+    this.onDelete,
   });
 
   @override
@@ -101,7 +104,7 @@ class CategoryActionButtons extends StatelessWidget {
           children: [
             if (isMultiSelectMode) ...[
               Expanded(
-                child: OutlinedButton(
+                child: OutlinedButton.icon(
                   onPressed: onSingleSelectMode,
                   style: OutlinedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: buttonHeight),
@@ -109,22 +112,38 @@ class CategoryActionButtons extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text('Single Select'),
+                  icon: const Icon(Iconsax.arrow_swap_horizontal, size: 18),
+                  label: const Text('Single'),
                 ),
               ),
               const SizedBox(width: 8),
             ],
             Expanded(
-              child: OutlinedButton(
-                onPressed: onCancel,
-                style: OutlinedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: buttonHeight),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text('Cancel'),
-              ),
+              child: isMultiSelectMode && hasSelection
+                  ? OutlinedButton(
+                      onPressed: onDelete,
+                      style: OutlinedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: buttonHeight),
+                        foregroundColor: Theme.of(context).colorScheme.error,
+                        side: BorderSide(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text('Delete ($selectedCount)'),
+                    )
+                  : OutlinedButton(
+                      onPressed: onCancel,
+                      style: OutlinedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: buttonHeight),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text('Cancel'),
+                    ),
             ),
           ],
         ),
@@ -137,7 +156,7 @@ class CategoryActionButtons extends StatelessWidget {
       children: [
         if (isMultiSelectMode) ...[
           Expanded(
-            child: OutlinedButton(
+            child: OutlinedButton.icon(
               onPressed: onSingleSelectMode,
               style: OutlinedButton.styleFrom(
                 padding: EdgeInsets.symmetric(vertical: buttonHeight),
@@ -145,22 +164,38 @@ class CategoryActionButtons extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('Single Select'),
+              icon: const Icon(Iconsax.arrow_swap_horizontal, size: 18),
+              label: const Text('Single'),
             ),
           ),
           const SizedBox(width: 12),
         ],
         Expanded(
-          child: OutlinedButton(
-            onPressed: onCancel,
-            style: OutlinedButton.styleFrom(
-              padding: EdgeInsets.symmetric(vertical: buttonHeight),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text('Cancel'),
-          ),
+          child: isMultiSelectMode && hasSelection
+              ? OutlinedButton(
+                  onPressed: onDelete,
+                  style: OutlinedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(vertical: buttonHeight),
+                    foregroundColor: Theme.of(context).colorScheme.error,
+                    side: BorderSide(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text('Delete ($selectedCount)'),
+                )
+              : OutlinedButton(
+                  onPressed: onCancel,
+                  style: OutlinedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(vertical: buttonHeight),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('Cancel'),
+                ),
         ),
         const SizedBox(width: 12),
         Expanded(

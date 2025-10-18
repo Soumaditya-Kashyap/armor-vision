@@ -270,6 +270,16 @@ class DatabaseService {
     }
   }
 
+  /// Delete category
+  Future<void> deleteCategory(String categoryId) async {
+    _ensureInitialized();
+    try {
+      await _categoriesBox.delete(categoryId);
+    } catch (e) {
+      throw DatabaseException('Failed to delete category: $e');
+    }
+  }
+
   /// Get app settings
   Future<AppSettings> getAppSettings() async {
     _ensureInitialized();

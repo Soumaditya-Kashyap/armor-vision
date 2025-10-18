@@ -198,6 +198,7 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
                       });
                     },
                     onCancel: _closeDialog,
+                    onDelete: _showDeleteConfirmation,
                   ),
                 ],
               ),
@@ -274,6 +275,66 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
         Navigator.of(context).pop();
       }
     });
+  }
+
+  void _showDeleteConfirmation() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: Icon(
+          Iconsax.trash,
+          color: Theme.of(context).colorScheme.error,
+          size: 48,
+        ),
+        title: const Text('Delete Categories?'),
+        content: Text(
+          'Are you sure you want to delete ${_selectedCategories.length} ${_selectedCategories.length == 1 ? 'category' : 'categories'}?\n\nThis action cannot be undone.',
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _deleteSelectedCategories();
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteSelectedCategories() async {
+    try {
+      final categoriesToDelete = _allCategories
+          .where((cat) => _selectedCategories.contains(cat.name))
+          .toList();
+
+      for (final category in categoriesToDelete) {
+        await _databaseService.deleteCategory(category.id);
+      }
+
+      setState(() {
+        _allCategories.removeWhere(
+          (cat) => _selectedCategories.contains(cat.name),
+        );
+        _selectedCategories.clear();
+        _isMultiSelectMode = false;
+      });
+
+      _showSnackBar(
+        'Successfully deleted ${categoriesToDelete.length} ${categoriesToDelete.length == 1 ? 'category' : 'categories'}',
+      );
+    } catch (e) {
+      _showSnackBar('Error deleting categories: $e', isError: true);
+    }
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
