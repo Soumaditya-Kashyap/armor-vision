@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:iconsax/iconsax.dart';
 import '../../models/password_entry.dart';
 import '../../services/database_service.dart';
+import '../../utils/icon_helper.dart';
 import '../../widgets/dialogs/add_entry_dialog.dart';
+import '../../widgets/dialogs/components/icon_picker_dialog.dart';
 import 'components/category_selection_header.dart';
 import 'components/category_grid.dart';
 import 'components/category_action_buttons.dart';
@@ -79,53 +82,6 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
         _isLoading = false;
       });
       _showSnackBar('Error loading categories: $e', isError: true);
-    }
-  }
-
-  // Helper methods
-  IconData _getCategoryIcon(String iconName) {
-    switch (iconName.toLowerCase()) {
-      case 'people':
-        return Icons.people;
-      case 'account_balance':
-        return Icons.account_balance;
-      case 'shopping_cart':
-        return Icons.shopping_cart;
-      case 'work':
-        return Icons.work;
-      case 'movie':
-        return Icons.movie;
-      case 'airplanemode_active':
-        return Icons.airplanemode_active;
-      case 'school':
-        return Icons.school;
-      case 'folder':
-        return Icons.folder;
-      default:
-        return Icons.label_outline;
-    }
-  }
-
-  Color _getCategoryColor(EntryColor? entryColor) {
-    switch (entryColor) {
-      case EntryColor.blue:
-        return Colors.blue;
-      case EntryColor.purple:
-        return Colors.purple;
-      case EntryColor.green:
-        return Colors.green;
-      case EntryColor.amber:
-        return Colors.amber;
-      case EntryColor.red:
-        return Colors.red;
-      case EntryColor.teal:
-        return Colors.teal;
-      case EntryColor.pink:
-        return Colors.pink;
-      case EntryColor.orange:
-        return Colors.orange;
-      default:
-        return Colors.grey;
     }
   }
 
@@ -265,14 +221,14 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
     showDialog(
       context: context,
       builder: (context) => _AddNewCategoryDialog(
-        onCategoryAdded: (categoryName) async {
+        onCategoryAdded: (categoryName, iconName) async {
           try {
             // Create new category in database
             final newCategory = Category(
               id: 'custom_${DateTime.now().millisecondsSinceEpoch}',
               name: categoryName,
               description: 'Custom category',
-              iconName: 'label',
+              iconName: iconName,
               color: EntryColor.blue,
               createdAt: DateTime.now(),
               sortOrder: _allCategories.length,
@@ -370,7 +326,7 @@ class CategoryData {
 }
 
 class _AddNewCategoryDialog extends StatefulWidget {
-  final Function(String) onCategoryAdded;
+  final Function(String, String) onCategoryAdded;
 
   const _AddNewCategoryDialog({required this.onCategoryAdded});
 
@@ -381,6 +337,8 @@ class _AddNewCategoryDialog extends StatefulWidget {
 class _AddNewCategoryDialogState extends State<_AddNewCategoryDialog> {
   final TextEditingController _nameController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  String _selectedIconName = 'label';
+  IconData _selectedIcon = Iconsax.tag;
 
   @override
   Widget build(BuildContext context) {
@@ -394,12 +352,78 @@ class _AddNewCategoryDialogState extends State<_AddNewCategoryDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Icon selector
+            InkWell(
+              onTap: _showIconPicker,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.outline.withOpacity(0.5),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        _selectedIcon,
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Category Icon',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface.withOpacity(0.6),
+                                ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _formatIconName(_selectedIconName),
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 16,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withOpacity(0.4),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(height: isLandscape ? 16 : 20),
+
+            // Category name input
             TextFormField(
               controller: _nameController,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Category Name',
                 hintText: 'e.g., Gaming, Health, Crypto',
-                prefixIcon: Icon(Icons.label_outline),
+                prefixIcon: Icon(_selectedIcon),
               ),
               textCapitalization: TextCapitalization.words,
               textInputAction: TextInputAction.done,
@@ -434,11 +458,33 @@ class _AddNewCategoryDialogState extends State<_AddNewCategoryDialog> {
     );
   }
 
+  void _showIconPicker() {
+    showDialog(
+      context: context,
+      builder: (context) => IconPickerDialog(
+        currentIconName: _selectedIconName,
+        onIconSelected: (iconName, iconData) {
+          setState(() {
+            _selectedIconName = iconName;
+            _selectedIcon = iconData;
+          });
+        },
+      ),
+    );
+  }
+
+  String _formatIconName(String name) {
+    return name
+        .split('_')
+        .map((word) => word[0].toUpperCase() + word.substring(1))
+        .join(' ');
+  }
+
   void _addCategory() {
     if (!_formKey.currentState!.validate()) return;
 
     final categoryName = _nameController.text.trim();
-    widget.onCategoryAdded(categoryName);
+    widget.onCategoryAdded(categoryName, _selectedIconName);
     Navigator.of(context).pop();
   }
 

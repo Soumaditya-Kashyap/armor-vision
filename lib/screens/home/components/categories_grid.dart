@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../models/password_entry.dart';
+import '../../../utils/icon_helper.dart';
 import '../../../utils/constants.dart';
 
 class CategoriesGrid extends StatelessWidget {
@@ -67,7 +68,7 @@ class CategoriesGrid extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
-                  _getCategoryIcon(category.iconName),
+                  IconHelper.getIconData(category.iconName),
                   color: AppHelpers.getEntryColor(category.color),
                   size: 24,
                 ),
@@ -148,24 +149,5 @@ class CategoriesGrid extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  IconData _getCategoryIcon(String iconName) {
-    switch (iconName) {
-      case 'work':
-        return Icons.work_rounded;
-      case 'personal':
-        return Icons.person_rounded;
-      case 'finance':
-        return Icons.account_balance_rounded;
-      case 'social':
-        return Icons.people_rounded;
-      case 'shopping':
-        return Icons.shopping_cart_rounded;
-      case 'entertainment':
-        return Icons.movie_rounded;
-      default:
-        return Icons.category_rounded;
-    }
   }
 }

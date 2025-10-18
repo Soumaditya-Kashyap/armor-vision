@@ -103,6 +103,14 @@ class DatabaseService {
       if (existingCategory == null) {
         // Add missing preset category
         await _categoriesBox.put(presetCategory.id, presetCategory);
+      } else {
+        // Update existing preset category's icon if it's different
+        if (existingCategory.iconName != presetCategory.iconName) {
+          final updatedCategory = existingCategory.copyWith(
+            iconName: presetCategory.iconName,
+          );
+          await _categoriesBox.put(presetCategory.id, updatedCategory);
+        }
       }
     }
   }
@@ -115,7 +123,7 @@ class DatabaseService {
         name: 'General',
         description: 'General accounts and services',
         color: EntryColor.blue,
-        iconName: 'lock',
+        iconName: 'folder',
         createdAt: DateTime.now(),
         sortOrder: 1,
       ),
@@ -124,7 +132,7 @@ class DatabaseService {
         name: 'Gmail',
         description: 'Gmail and Google accounts',
         color: EntryColor.red,
-        iconName: 'email',
+        iconName: 'message',
         createdAt: DateTime.now(),
         sortOrder: 2,
       ),
@@ -133,7 +141,7 @@ class DatabaseService {
         name: 'Work',
         description: 'Work-related accounts',
         color: EntryColor.green,
-        iconName: 'work',
+        iconName: 'briefcase',
         createdAt: DateTime.now(),
         sortOrder: 3,
       ),
@@ -151,7 +159,7 @@ class DatabaseService {
         name: 'Banking',
         description: 'Financial and banking accounts',
         color: EntryColor.orange,
-        iconName: 'account_balance',
+        iconName: 'bank',
         createdAt: DateTime.now(),
         sortOrder: 5,
       ),
@@ -160,7 +168,7 @@ class DatabaseService {
         name: 'Entertainment',
         description: 'Entertainment and media accounts',
         color: EntryColor.purple,
-        iconName: 'movie',
+        iconName: 'video',
         createdAt: DateTime.now(),
         sortOrder: 6,
       ),
@@ -169,9 +177,27 @@ class DatabaseService {
         name: 'Shopping',
         description: 'Online shopping accounts',
         color: EntryColor.amber,
-        iconName: 'shopping_cart',
+        iconName: 'shop',
         createdAt: DateTime.now(),
         sortOrder: 7,
+      ),
+      Category(
+        id: 'health',
+        name: 'Health',
+        description: 'Health and fitness accounts',
+        color: EntryColor.teal,
+        iconName: 'heart_tick',
+        createdAt: DateTime.now(),
+        sortOrder: 8,
+      ),
+      Category(
+        id: 'school',
+        name: 'School Principal',
+        description: 'Educational accounts',
+        color: EntryColor.blue,
+        iconName: 'book',
+        createdAt: DateTime.now(),
+        sortOrder: 9,
       ),
     ];
   }

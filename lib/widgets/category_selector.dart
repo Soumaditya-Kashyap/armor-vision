@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/password_entry.dart';
 import '../services/database_service.dart';
+import '../utils/icon_helper.dart';
 
 class CategorySelector extends StatefulWidget {
   final String? selectedCategory;
@@ -78,7 +79,7 @@ class _CategorySelectorState extends State<CategorySelector> {
                   (category) => _buildCategoryChip(
                     category.id,
                     category.name,
-                    _getCategoryIcon(category.iconName),
+                    IconHelper.getIconData(category.iconName),
                     color: _getCategoryColor(category.color),
                   ),
                 ),
@@ -272,27 +273,6 @@ class _CategorySelectorState extends State<CategorySelector> {
           ),
         );
       }
-    }
-  }
-
-  IconData _getCategoryIcon(String iconName) {
-    switch (iconName) {
-      case 'lock':
-        return Icons.lock_rounded;
-      case 'people':
-        return Icons.people_rounded;
-      case 'work':
-        return Icons.work_rounded;
-      case 'account_balance':
-        return Icons.account_balance_rounded;
-      case 'shopping_cart':
-        return Icons.shopping_cart_rounded;
-      case 'movie':
-        return Icons.movie_rounded;
-      case 'folder':
-        return Icons.folder_rounded;
-      default:
-        return Icons.category_rounded;
     }
   }
 

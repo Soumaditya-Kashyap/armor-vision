@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../models/password_entry.dart';
+import '../../../utils/icon_helper.dart';
 
 class CategoryGrid extends StatelessWidget {
   final List<Category> categories;
@@ -47,7 +48,7 @@ class CategoryGrid extends StatelessWidget {
   Widget _buildCategoryCircle(BuildContext context, Category category) {
     final isSelected = selectedCategories.contains(category.name);
     final categoryColor = _getCategoryColor(category.color);
-    final categoryIcon = _getCategoryIcon(category.iconName);
+    final categoryIcon = IconHelper.getIconData(category.iconName);
 
     return GestureDetector(
       onTap: () {
@@ -182,29 +183,6 @@ class CategoryGrid extends StatelessWidget {
         return Colors.orange;
       default:
         return Colors.grey;
-    }
-  }
-
-  IconData _getCategoryIcon(String iconName) {
-    switch (iconName.toLowerCase()) {
-      case 'people':
-        return Icons.people;
-      case 'account_balance':
-        return Icons.account_balance;
-      case 'shopping_cart':
-        return Icons.shopping_cart;
-      case 'work':
-        return Icons.work;
-      case 'movie':
-        return Icons.movie;
-      case 'airplanemode_active':
-        return Icons.airplanemode_active;
-      case 'school':
-        return Icons.school;
-      case 'folder':
-        return Icons.folder;
-      default:
-        return Icons.label_outline;
     }
   }
 }

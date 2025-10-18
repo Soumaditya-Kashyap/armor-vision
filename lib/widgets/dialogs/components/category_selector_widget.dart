@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../models/password_entry.dart';
+import '../../../utils/icon_helper.dart';
 import '../../../utils/constants.dart';
 
 class CategorySelectorWidget extends StatelessWidget {
@@ -52,7 +53,7 @@ class CategorySelectorWidget extends StatelessWidget {
       selected: isSelected,
       label: Text(category.name),
       avatar: Icon(
-        _getCategoryIcon(category.iconName),
+        IconHelper.getIconData(category.iconName),
         size: 18,
         color: isSelected
             ? colorScheme.onPrimary
@@ -73,26 +74,5 @@ class CategorySelectorWidget extends StatelessWidget {
             : colorScheme.outline.withOpacity(0.3),
       ),
     );
-  }
-
-  IconData _getCategoryIcon(String iconName) {
-    switch (iconName) {
-      case 'account_circle':
-        return Icons.account_circle_rounded;
-      case 'people':
-        return Icons.people_rounded;
-      case 'account_balance':
-        return Icons.account_balance_rounded;
-      case 'work':
-        return Icons.work_rounded;
-      case 'shopping_cart':
-        return Icons.shopping_cart_rounded;
-      case 'movie':
-        return Icons.movie_rounded;
-      case 'email':
-        return Icons.email_rounded;
-      default:
-        return Icons.folder_rounded;
-    }
   }
 }
