@@ -114,13 +114,12 @@ class DatabaseService {
         // Add missing preset category (only if not deleted before)
         await _categoriesBox.put(presetCategory.id, presetCategory);
       } else {
-        // Update existing preset category's icon if it's different
-        if (existingCategory.iconName != presetCategory.iconName) {
-          final updatedCategory = existingCategory.copyWith(
-            iconName: presetCategory.iconName,
-          );
-          await _categoriesBox.put(presetCategory.id, updatedCategory);
-        }
+        // Always update existing preset category with latest icon
+        // This ensures old icon names get updated to new Iconsax icons
+        final updatedCategory = existingCategory.copyWith(
+          iconName: presetCategory.iconName,
+        );
+        await _categoriesBox.put(presetCategory.id, updatedCategory);
       }
     }
   }
