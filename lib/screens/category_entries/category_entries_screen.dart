@@ -5,6 +5,7 @@ import '../../services/database_service.dart';
 import '../../utils/icon_helper.dart';
 import '../../utils/constants.dart';
 import '../../widgets/dialogs/add_entry_dialog.dart';
+import '../../widgets/dialogs/password_entry_detail_dialog.dart';
 
 class CategoryEntriesScreen extends StatefulWidget {
   final Category category;
@@ -389,8 +390,16 @@ class _CategoryEntriesScreenState extends State<CategoryEntriesScreen>
   }
 
   void _viewEntry(PasswordEntry entry) {
-    // For now, open edit dialog directly
-    _editEntry(entry);
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => PasswordEntryDetailDialog(
+        entry: entry,
+        onEntryUpdated: () {
+          _loadCategoryEntries(); // Refresh the entries list
+        },
+      ),
+    );
   }
 
   void _editEntry(PasswordEntry entry) {

@@ -32,10 +32,20 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isSelectionMode = false;
   final Set<String> _selectedEntryIds = {};
 
+  // Page controller for swipe gestures
+  late PageController _pageController;
+
   @override
   void initState() {
     super.initState();
+    _pageController = PageController(initialPage: _currentTabIndex);
     _loadData();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -168,6 +178,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       setState(() {
                         _currentTabIndex = index;
                       });
+                      // Animate to the selected page
+                      _pageController.animateToPage(
+                        index,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
                     },
                   ),
                 ],
@@ -178,8 +194,13 @@ class _HomeScreenState extends State<HomeScreen> {
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
-                  : IndexedStack(
-                      index: _currentTabIndex,
+                  : PageView(
+                      controller: _pageController,
+                      onPageChanged: (index) {
+                        setState(() {
+                          _currentTabIndex = index;
+                        });
+                      },
                       children: [
                         EntriesList(
                           entries: _filteredEntries,
@@ -379,11 +400,6 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
   }
 }
 
