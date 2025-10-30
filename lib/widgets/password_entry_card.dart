@@ -265,7 +265,7 @@ class PasswordEntryCard extends StatelessWidget {
                     ],
 
                     // Bottom section - last modified
-                    const Spacer(),
+                    const SizedBox(height: 6),
                     Text(
                       'Modified ${AppHelpers.formatDate(entry.updatedAt)}',
                       style: theme.textTheme.bodySmall?.copyWith(

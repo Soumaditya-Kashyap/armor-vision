@@ -46,7 +46,7 @@ class CategoryGrid extends StatelessWidget {
   }
 
   Widget _buildCategoryCircle(BuildContext context, Category category) {
-    final isSelected = selectedCategories.contains(category.name);
+    final isSelected = selectedCategories.contains(category.id);
     final categoryColor = _getCategoryColor(category.color);
     final categoryIcon = IconHelper.getIconData(category.iconName);
 

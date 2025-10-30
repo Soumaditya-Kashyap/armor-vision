@@ -156,9 +156,9 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
                                 if (_isMultiSelectMode) {
                                   // In multi-select mode, toggle selection
                                   if (isSelected) {
-                                    _selectedCategories.remove(category.name);
+                                    _selectedCategories.remove(category.id);
                                   } else {
-                                    _selectedCategories.add(category.name);
+                                    _selectedCategories.add(category.id);
                                   }
                                 } else {
                                   // In single-select mode, toggle or select single category
@@ -167,7 +167,7 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
                                         .clear(); // Unselect if tapped again
                                   } else {
                                     _selectedCategories.clear();
-                                    _selectedCategories.add(category.name);
+                                    _selectedCategories.add(category.id);
                                   }
                                 }
                               });
@@ -177,10 +177,10 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
                                 // Enable multi-select mode and add this category if not selected
                                 _isMultiSelectMode = true;
                                 final isSelected = _selectedCategories.contains(
-                                  category.name,
+                                  category.id,
                                 );
                                 if (!isSelected) {
-                                  _selectedCategories.add(category.name);
+                                  _selectedCategories.add(category.id);
                                 }
                               });
                             },
@@ -251,7 +251,7 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
             setState(() {
               _allCategories.add(newCategory);
               _selectedCategories.clear();
-              _selectedCategories.add(newCategory.name);
+              _selectedCategories.add(newCategory.id);
             });
 
             // Notify parent that categories have changed

@@ -77,6 +77,9 @@ class DatabaseService {
       // Initialize default data
       await _initializeDefaultData();
 
+      // Run migration to fix category names to IDs
+      await _migrateCategoryNamesToIds();
+
       _isInitialized = true;
     } catch (e) {
       throw DatabaseException('Failed to initialize database: $e');
@@ -122,6 +125,49 @@ class DatabaseService {
         await _categoriesBox.put(presetCategory.id, updatedCategory);
       }
     }
+  }
+
+  /// Migrate old password entries that have category names to category IDs
+  /// This fixes entries created before the category name->ID bug fix
+  Future<void> _migrateCategoryNamesToIds() async {
+    print('🔄 Running category migration...');
+
+    // Get all categories to build a name->ID map
+    final allCategories = _categoriesBox.values.toList();
+    final categoryNameToId = <String, String>{};
+
+    for (var category in allCategories) {
+      categoryNameToId[category.name] = category.id;
+    }
+
+    print('📋 Category name to ID mapping:');
+    categoryNameToId.forEach((name, id) {
+      print('   "$name" -> "$id"');
+    });
+
+    // Get all password entries
+    final allEntries = _entriesBox.values.toList();
+    int migratedCount = 0;
+
+    for (var entry in allEntries) {
+      if (entry.category != null && entry.category!.isNotEmpty) {
+        // Check if the category field contains a name instead of an ID
+        final categoryId = categoryNameToId[entry.category];
+
+        if (categoryId != null && categoryId != entry.category) {
+          // This entry has a category name, convert it to ID
+          print(
+            '✏️  Migrating "${entry.title}": "${entry.category}" -> "$categoryId"',
+          );
+
+          final updatedEntry = entry.copyWith(category: categoryId);
+          await _entriesBox.put(entry.key, updatedEntry);
+          migratedCount++;
+        }
+      }
+    }
+
+    print('✅ Migration complete! Updated $migratedCount entries.');
   }
 
   /// Get list of preset categories

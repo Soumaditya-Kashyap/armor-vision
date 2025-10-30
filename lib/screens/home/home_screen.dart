@@ -3,6 +3,7 @@ import '../../models/password_entry.dart';
 import '../../services/database_service.dart';
 import '../../widgets/dialogs/password_entry_detail_dialog.dart';
 import '../category_selection/category_selection_screen.dart';
+import '../category_entries/category_entries_screen.dart';
 import 'components/home_app_bar.dart';
 import 'components/home_search_bar.dart';
 import 'components/home_tab_bar.dart';
@@ -204,15 +205,17 @@ class _HomeScreenState extends State<HomeScreen> {
                           categories: _categories,
                           allEntries: _allEntries,
                           onCategoryTap: (category) {
-                            // TODO: Open category view
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Opening ${category.name} category...',
-                                ),
-                                duration: const Duration(seconds: 2),
-                              ),
-                            );
+                            Navigator.of(context)
+                                .push(
+                                  MaterialPageRoute(
+                                    builder: (context) => CategoryEntriesScreen(
+                                      category: category,
+                                    ),
+                                  ),
+                                )
+                                .then(
+                                  (_) => _loadData(),
+                                ); // Reload data when returning
                           },
                         ),
                       ],
