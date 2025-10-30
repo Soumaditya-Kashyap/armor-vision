@@ -32,9 +32,9 @@ class PasswordEntryCard extends StatelessWidget {
         // Access the categories box directly (synchronous)
         final categoriesBox = Hive.box<Category>('categories');
 
-        // Find the matching category
+        // Find the matching category by ID (not name!)
         final category = categoriesBox.values.firstWhere(
-          (cat) => cat.name.toLowerCase() == entry.category!.toLowerCase(),
+          (cat) => cat.id == entry.category,
           orElse: () => categoriesBox.values.first, // fallback
         );
 
@@ -58,9 +58,9 @@ class PasswordEntryCard extends StatelessWidget {
         // Access the categories box directly (synchronous)
         final categoriesBox = Hive.box<Category>('categories');
 
-        // Find the matching category
+        // Find the matching category by ID (not name!)
         final category = categoriesBox.values.firstWhere(
-          (cat) => cat.name.toLowerCase() == entry.category!.toLowerCase(),
+          (cat) => cat.id == entry.category,
           orElse: () => categoriesBox.values.first, // fallback
         );
 
