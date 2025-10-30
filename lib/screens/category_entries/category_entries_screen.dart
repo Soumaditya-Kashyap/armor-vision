@@ -4,7 +4,6 @@ import '../../models/password_entry.dart';
 import '../../services/database_service.dart';
 import '../../utils/icon_helper.dart';
 import '../../utils/constants.dart';
-import '../../widgets/password_entry_card.dart';
 import '../../widgets/dialogs/add_entry_dialog.dart';
 
 class CategoryEntriesScreen extends StatefulWidget {
@@ -201,9 +200,10 @@ class _CategoryEntriesScreenState extends State<CategoryEntriesScreen>
                           ),
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: 12),
-                        child: PasswordEntryCard(
-                          entry: entry,
-                          onTap: () => _viewEntry(entry),
+                        child: _buildCompactEntryCard(
+                          context,
+                          entry,
+                          categoryColor,
                         ),
                       ),
                     ),
@@ -270,6 +270,97 @@ class _CategoryEntriesScreenState extends State<CategoryEntriesScreen>
               textAlign: TextAlign.center,
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactEntryCard(
+    BuildContext context,
+    PasswordEntry entry,
+    Color categoryColor,
+  ) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: colorScheme.outlineVariant.withOpacity(0.5),
+          width: 1,
+        ),
+      ),
+      child: InkWell(
+        onTap: () => _viewEntry(entry),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              // Icon
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: categoryColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  IconHelper.getIconData(widget.category.iconName),
+                  color: categoryColor,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              // Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title
+                    Text(
+                      entry.title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurface,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    // Description or field count
+                    Text(
+                      entry.description?.isNotEmpty == true
+                          ? entry.description!
+                          : '${entry.customFields.length} ${entry.customFields.length == 1 ? 'field' : 'fields'}',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    // Modified time
+                    Text(
+                      'Modified ${AppHelpers.formatDate(entry.updatedAt)}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurface.withOpacity(0.5),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Arrow icon
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16,
+                color: colorScheme.onSurface.withOpacity(0.3),
+              ),
+            ],
+          ),
         ),
       ),
     );
