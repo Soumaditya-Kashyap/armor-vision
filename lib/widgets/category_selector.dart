@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import '../models/password_entry.dart';
 import '../services/database_service.dart';
@@ -230,11 +231,16 @@ class _CategorySelectorState extends State<CategorySelector> {
     if (name.isEmpty) return;
 
     try {
+      // Generate a random color for the new category
+      final random = Random();
+      final colors = EntryColor.values;
+      final randomColor = colors[random.nextInt(colors.length)];
+
       final newCategory = Category(
         id: 'custom_${DateTime.now().millisecondsSinceEpoch}',
         name: name,
         description: 'Custom category',
-        color: EntryColor.blue, // Default color for now
+        color: randomColor, // Random color assigned here
         iconName: 'folder', // Default icon for now
         createdAt: DateTime.now(),
         sortOrder: _categories.length + 1,

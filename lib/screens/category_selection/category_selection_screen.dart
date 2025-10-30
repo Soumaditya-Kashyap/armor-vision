@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax/iconsax.dart';
@@ -229,13 +230,18 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
       builder: (context) => _AddNewCategoryDialog(
         onCategoryAdded: (categoryName, iconName) async {
           try {
+            // Generate a random color for the new category
+            final random = Random();
+            final colors = EntryColor.values;
+            final randomColor = colors[random.nextInt(colors.length)];
+
             // Create new category in database
             final newCategory = Category(
               id: 'custom_${DateTime.now().millisecondsSinceEpoch}',
               name: categoryName,
               description: 'Custom category',
               iconName: iconName,
-              color: EntryColor.blue,
+              color: randomColor,
               createdAt: DateTime.now(),
               sortOrder: _allCategories.length,
             );
