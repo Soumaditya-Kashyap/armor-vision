@@ -23,28 +23,48 @@ class HomeTabBar extends StatefulWidget {
 class _HomeTabBarState extends State<HomeTabBar>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
-  late Animation<double> _animation;
-  int _previousIndex = 0;
+  late Animation<double> _positionAnimation;
+  double _currentPosition = 0.0;
 
   @override
   void initState() {
     super.initState();
-    _previousIndex = widget.currentIndex;
+    _currentPosition = widget.currentIndex.toDouble();
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 350),
     );
-    _animation = CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOutCubic,
-    );
+    _positionAnimation =
+        Tween<double>(begin: _currentPosition, end: _currentPosition).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeInOutCubic,
+          ),
+        );
   }
 
   @override
   void didUpdateWidget(HomeTabBar oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.currentIndex != widget.currentIndex) {
-      _previousIndex = oldWidget.currentIndex;
+      final distance = (widget.currentIndex - oldWidget.currentIndex).abs();
+
+      // Adjust duration based on distance
+      _animationController.duration = Duration(
+        milliseconds: 300 + (distance > 1 ? 50 : 0),
+      );
+
+      _positionAnimation =
+          Tween<double>(
+            begin: oldWidget.currentIndex.toDouble(),
+            end: widget.currentIndex.toDouble(),
+          ).animate(
+            CurvedAnimation(
+              parent: _animationController,
+              curve: Curves.easeInOutCubic,
+            ),
+          );
+
       _animationController.forward(from: 0.0);
     }
   }
@@ -71,87 +91,87 @@ class _HomeTabBarState extends State<HomeTabBar>
           width: 1,
         ),
       ),
-      child: Stack(
-        children: [
-          // Animated sliding indicator
-          AnimatedBuilder(
-            animation: _animation,
-            builder: (context, child) {
-              final startPosition = _previousIndex / 3;
-              final endPosition = widget.currentIndex / 3;
-              final currentPosition =
-                  startPosition +
-                  (endPosition - startPosition) * _animation.value;
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final availableWidth = constraints.maxWidth;
+          final tabWidth = availableWidth / 3;
 
-              return Positioned(
-                left:
-                    currentPosition * (MediaQuery.of(context).size.width - 40),
-                right:
-                    (1 - currentPosition - 1 / 3) *
-                    (MediaQuery.of(context).size.width - 40),
-                top: 0,
-                bottom: 0,
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 2),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        colorScheme.primary.withOpacity(0.9),
-                        colorScheme.primary.withOpacity(0.7),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: colorScheme.primary.withOpacity(0.4),
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: colorScheme.primary.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-          // Tab buttons
-          Row(
+          return Stack(
             children: [
-              Expanded(
-                child: _TabButton(
-                  label: 'All',
-                  count: widget.allCount,
-                  icon: Icons.all_inclusive_rounded,
-                  isSelected: widget.currentIndex == 0,
-                  onTap: () => widget.onTabChanged(0),
-                ),
+              // Animated sliding indicator
+              AnimatedBuilder(
+                animation: _positionAnimation,
+                builder: (context, child) {
+                  final position = _positionAnimation.value;
+
+                  return Positioned(
+                    left: position * tabWidth,
+                    width: tabWidth,
+                    top: 0,
+                    bottom: 0,
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 2),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            colorScheme.primary.withOpacity(0.9),
+                            colorScheme.primary.withOpacity(0.7),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: colorScheme.primary.withOpacity(0.4),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: colorScheme.primary.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
-              Expanded(
-                child: _TabButton(
-                  label: 'Starred',
-                  count: widget.favoritesCount,
-                  icon: Icons.star_rounded,
-                  isSelected: widget.currentIndex == 1,
-                  onTap: () => widget.onTabChanged(1),
-                ),
-              ),
-              Expanded(
-                child: _TabButton(
-                  label: 'Categories',
-                  count: widget.categoriesCount,
-                  icon: Icons.category_rounded,
-                  isSelected: widget.currentIndex == 2,
-                  onTap: () => widget.onTabChanged(2),
-                ),
+              // Tab buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: _TabButton(
+                      label: 'All',
+                      count: widget.allCount,
+                      icon: Icons.all_inclusive_rounded,
+                      isSelected: widget.currentIndex == 0,
+                      onTap: () => widget.onTabChanged(0),
+                    ),
+                  ),
+                  Expanded(
+                    child: _TabButton(
+                      label: 'Starred',
+                      count: widget.favoritesCount,
+                      icon: Icons.star_rounded,
+                      isSelected: widget.currentIndex == 1,
+                      onTap: () => widget.onTabChanged(1),
+                    ),
+                  ),
+                  Expanded(
+                    child: _TabButton(
+                      label: 'Categories',
+                      count: widget.categoriesCount,
+                      icon: Icons.category_rounded,
+                      isSelected: widget.currentIndex == 2,
+                      onTap: () => widget.onTabChanged(2),
+                    ),
+                  ),
+                ],
               ),
             ],
-          ),
-        ],
+          );
+        },
       ),
     );
   }

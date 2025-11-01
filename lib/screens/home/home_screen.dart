@@ -175,14 +175,12 @@ class _HomeScreenState extends State<HomeScreen> {
                     favoritesCount: _filteredFavorites.length,
                     categoriesCount: _categories.length,
                     onTabChanged: (index) {
-                      setState(() {
-                        _currentTabIndex = index;
-                      });
-                      // Animate to the selected page
+                      // Animate to the selected page without setState
+                      // The PageView's onPageChanged will handle the state update
                       _pageController.animateToPage(
                         index,
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
+                        duration: const Duration(milliseconds: 350),
+                        curve: Curves.easeInOutCubic,
                       );
                     },
                   ),
