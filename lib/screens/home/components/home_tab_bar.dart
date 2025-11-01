@@ -199,7 +199,7 @@ class _TabButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 4),
         color: Colors.transparent,
         child: Center(
           child: Row(
@@ -208,32 +208,33 @@ class _TabButton extends StatelessWidget {
             children: [
               Icon(
                 icon,
-                size: 15,
+                size: 14,
                 color: isSelected
                     ? Colors.white
                     : colorScheme.onSurfaceVariant.withOpacity(0.7),
               ),
-              const SizedBox(width: 5),
+              const SizedBox(width: 4),
               Flexible(
                 child: Text(
                   label,
                   style: TextStyle(
-                    fontSize: 12.5,
+                    fontSize: 11.5,
                     fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                     color: isSelected
                         ? Colors.white
                         : colorScheme.onSurfaceVariant.withOpacity(0.7),
-                    letterSpacing: 0.2,
+                    letterSpacing: 0,
                   ),
                   overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
               ),
               if (count > 0) ...[
-                const SizedBox(width: 5),
+                const SizedBox(width: 4),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 7,
-                    vertical: 3,
+                    horizontal: 6,
+                    vertical: 2,
                   ),
                   decoration: BoxDecoration(
                     color: isSelected
@@ -248,14 +249,14 @@ class _TabButton extends StatelessWidget {
                     ),
                   ),
                   constraints: const BoxConstraints(
-                    minWidth: 22,
-                    minHeight: 22,
+                    minWidth: 20,
+                    minHeight: 20,
                   ),
                   child: Center(
                     child: Text(
                       count.toString(),
                       style: TextStyle(
-                        fontSize: 10.5,
+                        fontSize: 10,
                         fontWeight: FontWeight.bold,
                         color: isSelected
                             ? Colors.white.withOpacity(0.95)
