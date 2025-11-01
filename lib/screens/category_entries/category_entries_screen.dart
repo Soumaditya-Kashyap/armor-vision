@@ -395,6 +395,23 @@ class _CategoryEntriesScreenState extends State<CategoryEntriesScreen>
               ),
               textAlign: TextAlign.center,
             ),
+            const SizedBox(height: 32),
+            FilledButton.icon(
+              onPressed: _addNewEntry,
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Add First Entry'),
+              style: FilledButton.styleFrom(
+                backgroundColor: categoryColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -527,62 +544,6 @@ class _CategoryEntriesScreenState extends State<CategoryEntriesScreen>
         onEntryUpdated: () {
           _loadCategoryEntries(); // Refresh the entries list
         },
-      ),
-    );
-  }
-
-  void _editEntry(PasswordEntry entry) {
-    showDialog(
-      context: context,
-      builder: (context) => AddEntryDialog(
-        existingEntry: entry,
-        onEntryUpdated: () {
-          _loadCategoryEntries();
-        },
-      ),
-    );
-  }
-
-  Future<void> _deleteEntry(PasswordEntry entry) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Entry'),
-        content: Text('Are you sure you want to delete "${entry.title}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      try {
-        await _databaseService.deletePasswordEntry(entry.id);
-        _loadCategoryEntries();
-        _showSuccessSnackBar('Entry deleted successfully');
-      } catch (e) {
-        _showErrorSnackBar('Error deleting entry: $e');
-      }
-    }
-  }
-
-  void _showSuccessSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
