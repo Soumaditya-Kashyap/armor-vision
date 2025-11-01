@@ -133,15 +133,19 @@ class CategoriesGrid extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: categoryColor.withOpacity(0.2),
+                    color: categoryColor.withOpacity(0.25),
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: categoryColor.withOpacity(0.4),
+                      width: 1,
+                    ),
                   ),
                   child: Text(
                     '$entryCount ${entryCount == 1 ? 'entry' : 'entries'}',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: categoryColor,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 11,
+                      color: categoryColor.withOpacity(0.9),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
                     ),
                   ),
                 ),
