@@ -217,10 +217,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           onFavoriteToggle: _toggleFavorite,
                           selectedEntryIds: _selectedEntryIds,
                           isSelectionMode: _isSelectionMode,
-                          emptyStateTitle: 'No Favorites Yet',
+                          emptyStateTitle: 'No Starred Items Yet',
                           emptyStateSubtitle:
-                              'Mark your most important passwords as favorites by tapping the heart icon. They\'ll appear here for quick access.',
-                          emptyStateIcon: Icons.favorite_outline_rounded,
+                              'Mark your most important passwords by starring them. They\'ll appear here for quick access.',
+                          emptyStateIcon: Icons.star_outline_rounded,
                         ),
                         CategoriesGrid(
                           categories: _categories,
@@ -358,6 +358,31 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _toggleFavorite(PasswordEntry entry) async {
+    // If removing star from Starred tab, show confirmation
+    if (entry.isFavorite && _currentTabIndex == 1) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Remove Star'),
+          content: Text(
+            'Are you sure you want to remove "${entry.title}" from starred items?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Remove'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed != true) return;
+    }
+
     try {
       final updatedEntry = entry.copyWith(
         isFavorite: !entry.isFavorite,
@@ -371,8 +396,8 @@ class _HomeScreenState extends State<HomeScreen> {
         SnackBar(
           content: Text(
             updatedEntry.isFavorite
-                ? 'Added to favorites'
-                : 'Removed from favorites',
+                ? 'Added to starred items'
+                : 'Removed from starred items',
           ),
           duration: const Duration(seconds: 2),
         ),
@@ -380,7 +405,7 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to update favorite: $e'),
+          content: Text('Failed to update starred item: $e'),
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );

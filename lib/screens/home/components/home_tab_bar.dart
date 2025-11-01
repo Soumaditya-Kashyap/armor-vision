@@ -133,9 +133,9 @@ class _HomeTabBarState extends State<HomeTabBar>
               ),
               Expanded(
                 child: _TabButton(
-                  label: 'Favorites',
+                  label: 'Starred',
                   count: widget.favoritesCount,
-                  icon: Icons.favorite_rounded,
+                  icon: Icons.star_rounded,
                   isSelected: widget.currentIndex == 1,
                   onTap: () => widget.onTabChanged(1),
                 ),

@@ -189,11 +189,11 @@ class PasswordEntryCard extends StatelessWidget {
                             padding: const EdgeInsets.all(2),
                             child: Icon(
                               entry.isFavorite
-                                  ? Icons.favorite_rounded
-                                  : Icons.favorite_border_rounded,
+                                  ? Icons.star_rounded
+                                  : Icons.star_border_rounded,
                               size: 16,
                               color: entry.isFavorite
-                                  ? Colors.red
+                                  ? Colors.amber
                                   : colorScheme.onSurface.withOpacity(0.6),
                             ),
                           ),
@@ -374,14 +374,6 @@ class PasswordEntryCard extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              if (entry.isFavorite) ...[
-                                const SizedBox(width: 8),
-                                Icon(
-                                  Icons.favorite_rounded,
-                                  size: 16,
-                                  color: Colors.red,
-                                ),
-                              ],
                             ],
                           ),
 
@@ -458,11 +450,11 @@ class PasswordEntryCard extends StatelessWidget {
                           padding: const EdgeInsets.all(8),
                           child: Icon(
                             entry.isFavorite
-                                ? Icons.favorite_rounded
-                                : Icons.favorite_border_rounded,
+                                ? Icons.star_rounded
+                                : Icons.star_border_rounded,
                             size: 20,
                             color: entry.isFavorite
-                                ? Colors.red
+                                ? Colors.amber
                                 : colorScheme.onSurface.withOpacity(0.6),
                           ),
                         ),
