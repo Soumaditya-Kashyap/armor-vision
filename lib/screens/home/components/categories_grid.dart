@@ -25,9 +25,9 @@ class CategoriesGrid extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 1.2,
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
+        childAspectRatio: 1.1,
       ),
       itemCount: categories.length,
       itemBuilder: (context, index) {
@@ -48,54 +48,105 @@ class CategoriesGrid extends StatelessWidget {
   ) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final categoryColor = AppHelpers.getEntryColor(category.color);
 
-    return Card(
-      child: InkWell(
-        onTap: () => onCategoryTap(category),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: AppHelpers.getEntryColor(
-                    category.color,
-                  ).withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            categoryColor.withOpacity(0.15),
+            categoryColor.withOpacity(0.05),
+          ],
+        ),
+        border: Border.all(color: categoryColor.withOpacity(0.3), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: categoryColor.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => onCategoryTap(category),
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Icon with enhanced design
+                Hero(
+                  tag: 'category_${category.id}',
+                  child: Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          categoryColor.withOpacity(0.9),
+                          categoryColor.withOpacity(0.7),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: categoryColor.withOpacity(0.4),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      IconHelper.getIconData(category.iconName),
+                      color: Colors.white,
+                      size: 32,
+                    ),
+                  ),
                 ),
-                child: Icon(
-                  IconHelper.getIconData(category.iconName),
-                  color: AppHelpers.getEntryColor(category.color),
-                  size: 24,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Flexible(
-                child: Text(
+                const Spacer(),
+                // Category name
+                Text(
                   category.name,
                   style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onSurface,
+                    letterSpacing: 0.5,
                   ),
                   textAlign: TextAlign.center,
                   overflow: TextOverflow.ellipsis,
-                  maxLines: 2,
+                  maxLines: 1,
                 ),
-              ),
-              const SizedBox(height: 4),
-              Flexible(
-                child: Text(
-                  '$entryCount ${entryCount == 1 ? 'entry' : 'entries'}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurface.withOpacity(0.6),
+                const SizedBox(height: 6),
+                // Entry count with badge style
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
                   ),
-                  overflow: TextOverflow.ellipsis,
+                  decoration: BoxDecoration(
+                    color: categoryColor.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '$entryCount ${entryCount == 1 ? 'entry' : 'entries'}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: categoryColor,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 11,
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
