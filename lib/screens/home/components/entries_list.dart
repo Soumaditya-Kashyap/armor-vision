@@ -95,7 +95,7 @@ class EntriesList extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.only(top: 8, bottom: 6),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Text(
         label,
         style: theme.textTheme.labelLarge?.copyWith(
@@ -115,7 +115,7 @@ class EntriesList extends StatelessWidget {
 
     if (showDateHeaders && sortOption != 'alphabetical') {
       return ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         children: _buildGroupedEntries(context),
       );
     }
