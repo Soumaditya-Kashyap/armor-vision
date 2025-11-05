@@ -384,7 +384,8 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final updatedEntry = entry.copyWith(
         isFavorite: !entry.isFavorite,
-        updatedAt: DateTime.now(),
+        // Don't update timestamp when starring/unstarring
+        // This prevents the entry from jumping to the top
       );
 
       await _databaseService.savePasswordEntry(updatedEntry);
