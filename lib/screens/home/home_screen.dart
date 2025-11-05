@@ -28,6 +28,9 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   int _currentTabIndex = 0;
 
+  // Sort option for All tab
+  String _sortOption = 'updated'; // 'updated', 'created', 'alphabetical'
+
   // Selection mode state
   bool _isSelectionMode = false;
   final Set<String> _selectedEntryIds = {};
@@ -103,8 +106,21 @@ class _HomeScreenState extends State<HomeScreen> {
       }).toList();
     }
 
-    // Sort by latest first (newest to oldest)
-    entries.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    // Sort based on selected option
+    switch (_sortOption) {
+      case 'alphabetical':
+        entries.sort(
+          (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()),
+        );
+        break;
+      case 'created':
+        entries.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        break;
+      case 'updated':
+      default:
+        entries.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+        break;
+    }
 
     return entries;
   }
@@ -167,8 +183,15 @@ class _HomeScreenState extends State<HomeScreen> {
                         _searchQuery = value;
                       });
                     },
+                    showSortButton: _currentTabIndex == 0,
+                    sortOption: _sortOption,
+                    onSortChanged: (value) {
+                      setState(() {
+                        _sortOption = value;
+                      });
+                    },
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   HomeTabBar(
                     currentIndex: _currentTabIndex,
                     allCount: _filteredEntries.length,
@@ -207,6 +230,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           onFavoriteToggle: _toggleFavorite,
                           selectedEntryIds: _selectedEntryIds,
                           isSelectionMode: _isSelectionMode,
+                          showDateHeaders: true,
+                          sortOption: _sortOption,
                         ),
                         EntriesList(
                           entries: _filteredFavorites,
@@ -215,6 +240,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           onFavoriteToggle: _toggleFavorite,
                           selectedEntryIds: _selectedEntryIds,
                           isSelectionMode: _isSelectionMode,
+                          showDateHeaders: false,
+                          sortOption: _sortOption,
                           emptyStateTitle: 'No Starred Items Yet',
                           emptyStateSubtitle:
                               'Mark your most important passwords by starring them. They\'ll appear here for quick access.',

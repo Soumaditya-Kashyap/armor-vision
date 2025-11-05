@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../../models/password_entry.dart';
 import '../../../widgets/password_entry_card.dart';
 
@@ -13,6 +14,8 @@ class EntriesList extends StatelessWidget {
   final Function(PasswordEntry) onFavoriteToggle;
   final Set<String> selectedEntryIds;
   final bool isSelectionMode;
+  final bool showDateHeaders;
+  final String sortOption;
 
   const EntriesList({
     super.key,
@@ -26,12 +29,95 @@ class EntriesList extends StatelessWidget {
     this.emptyStateTitle,
     this.emptyStateSubtitle,
     this.emptyStateIcon,
+    this.showDateHeaders = false,
+    this.sortOption = 'updated',
   });
+
+  String _getDateLabel(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final entryDate = DateTime(date.year, date.month, date.day);
+
+    if (entryDate == today) {
+      return 'Today';
+    } else if (entryDate == yesterday) {
+      return 'Yesterday';
+    } else {
+      return DateFormat('dd/MM/yyyy').format(date); // Format: 05/11/2025
+    }
+  }
+
+  List<Widget> _buildGroupedEntries(BuildContext context) {
+    if (entries.isEmpty) return [];
+
+    final widgets = <Widget>[];
+    String? currentDateLabel;
+
+    for (int i = 0; i < entries.length; i++) {
+      final entry = entries[i];
+      final isSelected = selectedEntryIds.contains(entry.id);
+
+      // Get the appropriate date based on sort option
+      final entryDate = sortOption == 'created'
+          ? entry.createdAt
+          : entry.updatedAt;
+      final dateLabel = _getDateLabel(entryDate);
+
+      // Add date header if it's a new date group
+      if (dateLabel != currentDateLabel) {
+        currentDateLabel = dateLabel;
+        widgets.add(_buildDateHeader(context, dateLabel));
+      }
+
+      // Add the entry card
+      widgets.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: PasswordEntryCard(
+            entry: entry,
+            isListView: true,
+            isSelected: isSelected,
+            isSelectionMode: isSelectionMode,
+            onTap: () => onEntryTap(entry),
+            onLongPress: () => onEntryLongPress(entry),
+            onFavoriteToggle: () => onFavoriteToggle(entry),
+          ),
+        ),
+      );
+    }
+
+    return widgets;
+  }
+
+  Widget _buildDateHeader(BuildContext context, String label) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 6),
+      child: Text(
+        label,
+        style: theme.textTheme.labelLarge?.copyWith(
+          color: colorScheme.onSurface.withOpacity(0.5),
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     if (entries.isEmpty) {
       return _buildEmptyState(context);
+    }
+
+    if (showDateHeaders && sortOption != 'alphabetical') {
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: _buildGroupedEntries(context),
+      );
     }
 
     return ListView.builder(
