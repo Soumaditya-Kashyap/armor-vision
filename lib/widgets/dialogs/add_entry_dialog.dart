@@ -620,6 +620,39 @@ class _AddEntryDialogState extends State<AddEntryDialog>
     );
   }
 
+  bool _areCustomFieldsEqual(List<CustomField> list1, List<CustomField> list2) {
+    if (list1.length != list2.length) return false;
+
+    for (int i = 0; i < list1.length; i++) {
+      final field1 = list1[i];
+      final field2 = list2[i];
+
+      if (field1.label != field2.label ||
+          field1.value != field2.value ||
+          field1.type != field2.type ||
+          field1.isRequired != field2.isRequired ||
+          field1.isHidden != field2.isHidden) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  bool _areTagsEqual(List<String> list1, List<String> list2) {
+    if (list1.length != list2.length) return false;
+
+    // Sort and compare
+    final sorted1 = List<String>.from(list1)..sort();
+    final sorted2 = List<String>.from(list2)..sort();
+
+    for (int i = 0; i < sorted1.length; i++) {
+      if (sorted1[i] != sorted2[i]) return false;
+    }
+
+    return true;
+  }
+
   Future<void> _saveEntry() async {
     if (!_formKey.currentState!.validate()) {
       _showSnackBar('Please fill in all required fields', isError: true);
@@ -634,14 +667,35 @@ class _AddEntryDialogState extends State<AddEntryDialog>
       final PasswordEntry entry;
 
       if (widget.existingEntry != null) {
-        // Update existing entry
+        // Check if any field has actually changed
+        final hasChanges =
+            widget.existingEntry!.title != _titleController.text.trim() ||
+            widget.existingEntry!.description !=
+                (_descriptionController.text.trim().isEmpty
+                    ? null
+                    : _descriptionController.text.trim()) ||
+            widget.existingEntry!.category != _selectedCategory ||
+            widget.existingEntry!.color != _selectedColor ||
+            widget.existingEntry!.notes !=
+                (_notesController.text.trim().isEmpty
+                    ? null
+                    : _notesController.text.trim()) ||
+            !_areCustomFieldsEqual(
+              widget.existingEntry!.customFields,
+              _customFields,
+            ) ||
+            !_areTagsEqual(widget.existingEntry!.tags, _selectedTags);
+
+        // Update existing entry - only update timestamp if changes were made
         entry = widget.existingEntry!.copyWith(
           title: _titleController.text.trim(),
           description: _descriptionController.text.trim().isEmpty
               ? null
               : _descriptionController.text.trim(),
           customFields: _customFields,
-          updatedAt: DateTime.now(),
+          updatedAt: hasChanges
+              ? DateTime.now()
+              : widget.existingEntry!.updatedAt,
           category: _selectedCategory,
           color: _selectedColor,
           notes: _notesController.text.trim().isEmpty
