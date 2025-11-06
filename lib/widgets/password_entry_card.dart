@@ -352,21 +352,21 @@ class PasswordEntryCard extends StatelessWidget {
                     : null,
               ),
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(14),
                 child: Row(
                   children: [
                     // Dynamic icon based on category
                     Container(
-                      width: 48,
-                      height: 48,
+                      width: 44,
+                      height: 44,
                       decoration: BoxDecoration(
                         color: entryColor.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(_getEntryIcon(), color: entryColor, size: 24),
+                      child: Icon(_getEntryIcon(), color: entryColor, size: 22),
                     ),
 
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 12),
 
                     // Content
                     Expanded(
@@ -382,6 +382,7 @@ class PasswordEntryCard extends StatelessWidget {
                                   style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w600,
                                     color: colorScheme.onSurface,
+                                    fontSize: 15,
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -396,8 +397,9 @@ class PasswordEntryCard extends StatelessWidget {
                             entry.description?.isNotEmpty == true
                                 ? entry.description!
                                 : '${entry.customFields.length} ${entry.customFields.length == 1 ? 'field' : 'fields'}',
-                            style: theme.textTheme.bodyMedium?.copyWith(
+                            style: theme.textTheme.bodySmall?.copyWith(
                               color: colorScheme.onSurface.withOpacity(0.7),
+                              fontSize: 13,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -407,6 +409,7 @@ class PasswordEntryCard extends StatelessWidget {
 
                           // Category and date
                           Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               if (entry.category != null) ...[
                                 Flexible(

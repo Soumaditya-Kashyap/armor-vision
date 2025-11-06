@@ -73,7 +73,7 @@ class EntriesList extends StatelessWidget {
       // Add the entry card
       widgets.add(
         Padding(
-          padding: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.only(bottom: 4),
           child: PasswordEntryCard(
             entry: entry,
             isListView: true,
@@ -95,13 +95,14 @@ class EntriesList extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.only(top: 12, bottom: 8),
+      padding: const EdgeInsets.only(top: 2, bottom: 2),
       child: Text(
         label,
         style: theme.textTheme.labelLarge?.copyWith(
           color: colorScheme.onSurface.withOpacity(0.5),
           fontWeight: FontWeight.w600,
           letterSpacing: 0.5,
+          fontSize: 12,
         ),
       ),
     );
@@ -128,7 +129,7 @@ class EntriesList extends StatelessWidget {
         final isSelected = selectedEntryIds.contains(entry.id);
 
         return Padding(
-          padding: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.only(bottom: 4),
           child: PasswordEntryCard(
             entry: entry,
             isListView: true,
