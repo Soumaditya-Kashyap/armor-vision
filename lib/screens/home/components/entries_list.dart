@@ -95,7 +95,7 @@ class EntriesList extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.only(top: 12, bottom: 8),
       child: Text(
         label,
         style: theme.textTheme.labelLarge?.copyWith(

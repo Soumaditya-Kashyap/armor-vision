@@ -190,14 +190,14 @@ class PasswordEntryCard extends StatelessWidget {
                         // Favorite button
                         InkWell(
                           onTap: onFavoriteToggle,
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(20),
                           child: Padding(
-                            padding: const EdgeInsets.all(2),
+                            padding: const EdgeInsets.all(4),
                             child: Icon(
                               entry.isFavorite
                                   ? Icons.star_rounded
                                   : Icons.star_border_rounded,
-                              size: 20,
+                              size: 22,
                               color: entry.isFavorite
                                   ? Colors.amber
                                   : colorScheme.onSurface.withOpacity(0.6),
@@ -457,14 +457,14 @@ class PasswordEntryCard extends StatelessWidget {
                     if (!isSelectionMode)
                       InkWell(
                         onTap: onFavoriteToggle,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(24),
                         child: Padding(
                           padding: const EdgeInsets.all(8),
                           child: Icon(
                             entry.isFavorite
                                 ? Icons.star_rounded
                                 : Icons.star_border_rounded,
-                            size: 20,
+                            size: 26,
                             color: entry.isFavorite
                                 ? Colors.amber
                                 : colorScheme.onSurface.withOpacity(0.6),
