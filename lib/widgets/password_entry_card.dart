@@ -414,9 +414,10 @@ class PasswordEntryCard extends StatelessWidget {
                               if (entry.category != null) ...[
                                 Flexible(
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 2,
+                                    padding: const EdgeInsets.only(
+                                      right: 6,
+                                      top: 2,
+                                      bottom: 2,
                                     ),
                                     decoration: BoxDecoration(
                                       color: AppHelpers.getEntryColor(
