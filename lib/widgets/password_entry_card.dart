@@ -122,6 +122,12 @@ class PasswordEntryCard extends StatelessWidget {
   ) {
     return Card(
       elevation: isSelected ? 8 : 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
+        side: entry.isFavorite
+            ? BorderSide(color: entryColor, width: 2.5)
+            : BorderSide.none,
+      ),
       child: Stack(
         children: [
           InkWell(
@@ -160,13 +166,13 @@ class PasswordEntryCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        // Color indicator
+                        // Color indicator - thicker when favorite
                         Container(
-                          width: 3,
-                          height: 20,
+                          width: entry.isFavorite ? 5 : 3,
+                          height: entry.isFavorite ? 24 : 20,
                           decoration: BoxDecoration(
                             color: entryColor,
-                            borderRadius: BorderRadius.circular(2),
+                            borderRadius: BorderRadius.circular(3),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -191,7 +197,7 @@ class PasswordEntryCard extends StatelessWidget {
                               entry.isFavorite
                                   ? Icons.star_rounded
                                   : Icons.star_border_rounded,
-                              size: 16,
+                              size: 20,
                               color: entry.isFavorite
                                   ? Colors.amber
                                   : colorScheme.onSurface.withOpacity(0.6),
@@ -325,6 +331,12 @@ class PasswordEntryCard extends StatelessWidget {
   ) {
     return Card(
       elevation: isSelected ? 4 : 1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppConstants.defaultRadius),
+        side: entry.isFavorite
+            ? BorderSide(color: entryColor, width: 2.5)
+            : BorderSide.none,
+      ),
       child: Stack(
         children: [
           InkWell(
