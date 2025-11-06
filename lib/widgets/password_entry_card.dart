@@ -413,29 +413,15 @@ class PasswordEntryCard extends StatelessWidget {
                             children: [
                               if (entry.category != null) ...[
                                 Flexible(
-                                  child: Container(
-                                    padding: const EdgeInsets.only(
-                                      right: 6,
-                                      top: 2,
-                                      bottom: 2,
-                                    ),
-                                    decoration: BoxDecoration(
+                                  child: Text(
+                                    entry.category!.toUpperCase(),
+                                    style: theme.textTheme.labelSmall?.copyWith(
                                       color: AppHelpers.getEntryColor(
                                         entry.color,
-                                      ).withOpacity(0.15),
-                                      borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      fontWeight: FontWeight.w600,
                                     ),
-                                    child: Text(
-                                      entry.category!.toUpperCase(),
-                                      style: theme.textTheme.labelSmall
-                                          ?.copyWith(
-                                            color: AppHelpers.getEntryColor(
-                                              entry.color,
-                                            ),
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                                 const SizedBox(width: 8),
