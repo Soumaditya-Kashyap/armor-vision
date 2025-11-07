@@ -535,17 +535,26 @@ class _CategoryEntriesScreenState extends State<CategoryEntriesScreen>
     );
   }
 
-  void _viewEntry(PasswordEntry entry) {
+  void _viewEntry(PasswordEntry entry) async {
+    // Increment access count
+    final updatedEntry = entry.copyWith(
+      accessCount: entry.accessCount + 1,
+      lastAccessedAt: DateTime.now(),
+    );
+    await DatabaseService().savePasswordEntry(updatedEntry);
+
     showDialog(
       context: context,
       barrierDismissible: true,
       builder: (context) => PasswordEntryDetailDialog(
-        entry: entry,
+        entry: updatedEntry,
         onEntryUpdated: () {
           _loadCategoryEntries(); // Refresh the entries list
         },
       ),
-    );
+    ).then((_) {
+      _loadCategoryEntries(); // Refresh after dialog closes to show updated access count
+    });
   }
 
   void _showErrorSnackBar(String message) {

@@ -58,10 +58,8 @@ class EntriesList extends StatelessWidget {
       final entry = entries[i];
       final isSelected = selectedEntryIds.contains(entry.id);
 
-      // Get the appropriate date based on sort option
-      final entryDate = sortOption == 'created'
-          ? entry.createdAt
-          : entry.updatedAt;
+      // Get the appropriate date based on sort option (use updatedAt for mostUsed)
+      final entryDate = entry.updatedAt;
       final dateLabel = _getDateLabel(entryDate);
 
       // Add date header if it's a new date group

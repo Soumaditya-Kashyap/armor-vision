@@ -113,8 +113,8 @@ class _HomeScreenState extends State<HomeScreen> {
           (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()),
         );
         break;
-      case 'created':
-        entries.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      case 'mostUsed':
+        entries.sort((a, b) => b.accessCount.compareTo(a.accessCount));
         break;
       case 'updated':
       default:
@@ -369,17 +369,26 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _openEntryDetails(PasswordEntry entry) {
+  void _openEntryDetails(PasswordEntry entry) async {
+    // Increment access count
+    final updatedEntry = entry.copyWith(
+      accessCount: entry.accessCount + 1,
+      lastAccessedAt: DateTime.now(),
+    );
+    await _databaseService.savePasswordEntry(updatedEntry);
+
     showDialog(
       context: context,
       barrierDismissible: true,
       builder: (context) => PasswordEntryDetailDialog(
-        entry: entry,
+        entry: updatedEntry,
         onEntryUpdated: () {
           _loadData(); // Refresh the entries list
         },
       ),
-    );
+    ).then((_) {
+      _loadData(); // Refresh after dialog closes to show updated access count
+    });
   }
 
   Future<void> _toggleFavorite(PasswordEntry entry) async {

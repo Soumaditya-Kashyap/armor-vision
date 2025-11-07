@@ -94,27 +94,27 @@ class HomeSearchBar extends StatelessWidget {
                   ),
                 ),
                 PopupMenuItem(
-                  value: 'created',
+                  value: 'mostUsed',
                   child: Row(
                     children: [
                       Icon(
-                        sortOption == 'created'
+                        sortOption == 'mostUsed'
                             ? Icons.radio_button_checked
                             : Icons.radio_button_unchecked,
                         size: 18,
-                        color: sortOption == 'created'
+                        color: sortOption == 'mostUsed'
                             ? colorScheme.primary
                             : colorScheme.onSurface.withOpacity(0.6),
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        'Date Created',
+                        'Most Used',
                         style: TextStyle(
                           fontSize: 14,
-                          fontWeight: sortOption == 'created'
+                          fontWeight: sortOption == 'mostUsed'
                               ? FontWeight.w600
                               : FontWeight.normal,
-                          color: sortOption == 'created'
+                          color: sortOption == 'mostUsed'
                               ? colorScheme.primary
                               : colorScheme.onSurface,
                         ),
