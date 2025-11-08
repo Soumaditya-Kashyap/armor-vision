@@ -416,10 +416,10 @@ class PdfGeneratorService {
           ),
           pw.Row(
             children: [
-              if (entry['isFavorite'] == true) _buildBadge('★', _accentColor),
+              if (entry['isFavorite'] == true) _buildBadge('FAV', _accentColor),
               if (entry['isArchived'] == true) ...[
                 pw.SizedBox(width: 4),
-                _buildBadge('📦', PdfColors.grey400),
+                _buildBadge('ARC', PdfColors.grey400),
               ],
             ],
           ),
