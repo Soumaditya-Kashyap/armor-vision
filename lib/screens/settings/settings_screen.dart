@@ -5,6 +5,7 @@ import '../../utils/armor_themes.dart';
 import 'components/section_header.dart';
 import 'components/theme_selector.dart';
 import 'components/coming_soon_card.dart';
+import 'components/data_transparency_card.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -84,6 +85,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const SizedBox(height: 16),
               ThemeSelector(onThemeUpdate: _updateTheme),
+
+              const SizedBox(height: 32),
+
+              // Data Transparency Section
+              const SectionHeader(
+                title: 'Data Transparency',
+                icon: Icons.folder_open_rounded,
+              ),
+              const SizedBox(height: 16),
+              const DataTransparencyCard(),
 
               const SizedBox(height: 32),
 

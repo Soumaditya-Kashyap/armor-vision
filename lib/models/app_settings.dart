@@ -68,6 +68,9 @@ class AppSettings extends HiveObject {
   @HiveField(20)
   ArmorThemeMode? themeMode;
 
+  @HiveField(21, defaultValue: false)
+  bool? armorFolderMigrated;
+
   AppSettings({
     this.isDarkMode = false,
     this.isBiometricEnabled = true,
@@ -90,6 +93,7 @@ class AppSettings extends HiveObject {
     required this.createdAt,
     required this.updatedAt,
     this.themeMode,
+    this.armorFolderMigrated,
   });
 
   // Getter to provide a default theme mode
@@ -117,6 +121,7 @@ class AppSettings extends HiveObject {
     DateTime? createdAt,
     DateTime? updatedAt,
     ArmorThemeMode? themeMode,
+    bool? armorFolderMigrated,
   }) {
     return AppSettings(
       isDarkMode: isDarkMode ?? this.isDarkMode,
@@ -141,6 +146,7 @@ class AppSettings extends HiveObject {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       themeMode: themeMode ?? this.themeMode,
+      armorFolderMigrated: armorFolderMigrated ?? this.armorFolderMigrated,
     );
   }
 }

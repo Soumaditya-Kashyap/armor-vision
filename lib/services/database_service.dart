@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/password_entry.dart';
 import '../models/app_settings.dart';
 import '../utils/armor_themes.dart';
 import 'encryption_service.dart';
+import 'export_service.dart';
 
 class DatabaseService {
   static const String _entriesBoxName = 'password_entries';
@@ -79,6 +81,38 @@ class DatabaseService {
 
       // Run migration to fix category names to IDs
       await _migrateCategoryNamesToIds();
+
+      // Initialize Armor folder for user transparency (async, non-blocking)
+      ExportService()
+          .initializeArmorFolder()
+          .then((success) async {
+            if (success) {
+              print('✅ Armor transparency folder initialized');
+              // Run data migration for existing users (only once)
+              await _migrateExistingDataToArmorFolder();
+            } else {
+              print(
+                '⚠️ Armor folder initialization failed (app will continue normally)',
+              );
+            }
+          })
+          .catchError((error) {
+            print('⚠️ Armor folder error: $error');
+          });
+
+      // Also trigger immediate migration if folder already exists
+      final folderExists = await ExportService()
+          .getArmorFolderPath()
+          .then((path) async {
+            if (path == null) return false;
+            final dir = Directory(path);
+            return await dir.exists();
+          })
+          .catchError((_) => false);
+
+      if (folderExists) {
+        await _migrateExistingDataToArmorFolder();
+      }
 
       _isInitialized = true;
     } catch (e) {
@@ -168,6 +202,79 @@ class DatabaseService {
     }
 
     print('✅ Migration complete! Updated $migratedCount entries.');
+  }
+
+  /// Migrate existing data to Armor transparency folder
+  /// This runs once on first launch after update
+  Future<void> _migrateExistingDataToArmorFolder() async {
+    try {
+      // Check if migration has already been done
+      final settings = _settingsBox.get('default');
+      if (settings?.armorFolderMigrated ?? false) {
+        return; // Already migrated
+      }
+
+      print('🔄 Starting Armor folder migration for existing data...');
+
+      // Check if there's any existing data to migrate
+      final hasEntries = _entriesBox.isNotEmpty;
+      final hasCategories = _categoriesBox.isNotEmpty;
+
+      if (!hasEntries && !hasCategories) {
+        print('ℹ️  No existing data to migrate');
+        // Mark as migrated anyway
+        if (settings != null) {
+          final updatedSettings = settings.copyWith(
+            armorFolderMigrated: true,
+            updatedAt: DateTime.now(),
+          );
+          await _settingsBox.put('default', updatedSettings);
+        }
+        return;
+      }
+
+      // Export existing data to Armor folder
+      bool success = true;
+
+      if (hasEntries) {
+        print('📤 Exporting ${_entriesBox.length} existing entries...');
+        final exportSuccess = await ExportService().exportAllEntries();
+        if (!exportSuccess) {
+          print('⚠️ Entry export failed during migration');
+          success = false;
+        }
+      }
+
+      if (hasCategories) {
+        print('📤 Exporting ${_categoriesBox.length} existing categories...');
+        final exportSuccess = await ExportService().exportCategories();
+        if (!exportSuccess) {
+          print('⚠️ Category export failed during migration');
+          success = false;
+        }
+      }
+
+      // Mark migration as complete (even if export failed, don't retry)
+      if (settings != null) {
+        final updatedSettings = settings.copyWith(
+          armorFolderMigrated: true,
+          updatedAt: DateTime.now(),
+        );
+        await _settingsBox.put('default', updatedSettings);
+      }
+
+      if (success) {
+        print('✅ Armor folder migration complete!');
+        print('📂 Your data is now available at /storage/emulated/0/Armor/');
+      } else {
+        print(
+          '⚠️ Migration completed with some errors (check Settings for status)',
+        );
+      }
+    } catch (e) {
+      print('❌ Migration error: $e');
+      // Don't throw - app should continue even if migration fails
+    }
   }
 
   /// Get list of preset categories
@@ -262,6 +369,16 @@ class DatabaseService {
     _ensureInitialized();
     try {
       await _entriesBox.put(entry.id, entry);
+
+      // Export to user-accessible folder (async, non-blocking)
+      ExportService()
+          .exportAllEntries()
+          .then((_) {
+            print('✅ Exported entries to Armor folder');
+          })
+          .catchError((error) {
+            print('⚠️ Export failed: $error');
+          });
     } catch (e) {
       throw DatabaseException('Failed to save password entry: $e');
     }
@@ -298,6 +415,16 @@ class DatabaseService {
     _ensureInitialized();
     try {
       await _entriesBox.delete(id);
+
+      // Export to user-accessible folder (async, non-blocking)
+      ExportService()
+          .exportAllEntries()
+          .then((_) {
+            print('✅ Exported entries after deletion');
+          })
+          .catchError((error) {
+            print('⚠️ Export failed: $error');
+          });
     } catch (e) {
       throw DatabaseException('Failed to delete password entry: $e');
     }
@@ -308,6 +435,16 @@ class DatabaseService {
     _ensureInitialized();
     try {
       await _categoriesBox.put(category.id, category);
+
+      // Export categories to user-accessible folder (async, non-blocking)
+      ExportService()
+          .exportCategories()
+          .then((_) {
+            print('✅ Exported categories to Armor folder');
+          })
+          .catchError((error) {
+            print('⚠️ Category export failed: $error');
+          });
     } catch (e) {
       throw DatabaseException('Failed to save category: $e');
     }
@@ -334,6 +471,16 @@ class DatabaseService {
 
       // Mark as deleted so it won't be re-created on app restart
       await _deletedCategoriesBox.put(categoryId, categoryId);
+
+      // Export categories to user-accessible folder (async, non-blocking)
+      ExportService()
+          .exportCategories()
+          .then((_) {
+            print('✅ Exported categories after deletion');
+          })
+          .catchError((error) {
+            print('⚠️ Category export failed: $error');
+          });
     } catch (e) {
       throw DatabaseException('Failed to delete category: $e');
     }
