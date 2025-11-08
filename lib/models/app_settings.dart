@@ -68,6 +68,15 @@ class AppSettings extends HiveObject {
   @HiveField(20)
   ArmorThemeMode? themeMode;
 
+  @HiveField(21)
+  String? defaultExportPassword;
+
+  @HiveField(22)
+  String? preferredExportFormat;
+
+  @HiveField(23)
+  DateTime? lastExportDate;
+
   AppSettings({
     this.isDarkMode = false,
     this.isBiometricEnabled = true,
@@ -90,6 +99,9 @@ class AppSettings extends HiveObject {
     required this.createdAt,
     required this.updatedAt,
     this.themeMode,
+    this.defaultExportPassword,
+    this.preferredExportFormat,
+    this.lastExportDate,
   });
 
   // Getter to provide a default theme mode
@@ -117,6 +129,9 @@ class AppSettings extends HiveObject {
     DateTime? createdAt,
     DateTime? updatedAt,
     ArmorThemeMode? themeMode,
+    String? defaultExportPassword,
+    String? preferredExportFormat,
+    DateTime? lastExportDate,
   }) {
     return AppSettings(
       isDarkMode: isDarkMode ?? this.isDarkMode,
@@ -141,6 +156,11 @@ class AppSettings extends HiveObject {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       themeMode: themeMode ?? this.themeMode,
+      defaultExportPassword:
+          defaultExportPassword ?? this.defaultExportPassword,
+      preferredExportFormat:
+          preferredExportFormat ?? this.preferredExportFormat,
+      lastExportDate: lastExportDate ?? this.lastExportDate,
     );
   }
 }
