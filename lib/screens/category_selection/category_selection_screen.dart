@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:iconsax/iconsax.dart';
 import '../../models/password_entry.dart';
 import '../../services/database_service.dart';
-import '../../utils/icon_helper.dart';
 import '../../widgets/dialogs/add_entry_dialog.dart';
 import '../../widgets/dialogs/components/icon_picker_dialog.dart';
 import 'components/category_selection_header.dart';

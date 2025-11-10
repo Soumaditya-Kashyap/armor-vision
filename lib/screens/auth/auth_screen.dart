@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
-import '../../utils/constants.dart';
 import '../home/home_screen.dart';
 
 class AuthScreen extends StatefulWidget {
