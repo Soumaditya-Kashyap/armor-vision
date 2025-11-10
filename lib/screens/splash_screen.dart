@@ -35,21 +35,19 @@ class _SplashScreenState extends State<SplashScreen>
       vsync: this,
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+      ),
+    );
 
-    _scaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: const Interval(0.2, 0.8, curve: Curves.elasticOut),
-    ));
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.2, 0.8, curve: Curves.elasticOut),
+      ),
+    );
 
     _animationController.forward();
   }
@@ -90,7 +88,9 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _initializeWithStatus(
-      String status, Future<void> Function() task) async {
+    String status,
+    Future<void> Function() task,
+  ) async {
     setState(() {
       _statusText = status;
     });
@@ -114,10 +114,7 @@ class _SplashScreenState extends State<SplashScreen>
             return needsAuth ? const AuthScreen() : const HomeScreen();
           },
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: animation,
-              child: child,
-            );
+            return FadeTransition(opacity: animation, child: child);
           },
           transitionDuration: const Duration(milliseconds: 500),
         ),
@@ -175,8 +172,9 @@ class _SplashScreenState extends State<SplashScreen>
                                   borderRadius: BorderRadius.circular(30),
                                   boxShadow: [
                                     BoxShadow(
-                                      color:
-                                          colorScheme.primary.withOpacity(0.3),
+                                      color: colorScheme.primary.withOpacity(
+                                        0.3,
+                                      ),
                                       blurRadius: 20,
                                       offset: const Offset(0, 10),
                                     ),
@@ -256,8 +254,9 @@ class _SplashScreenState extends State<SplashScreen>
 
                               // Error Text
                               Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 32),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 32,
+                                ),
                                 child: Text(
                                   _statusText,
                                   style: theme.textTheme.bodyMedium?.copyWith(
