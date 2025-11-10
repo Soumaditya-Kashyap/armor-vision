@@ -15,8 +15,6 @@ class ExportFormatAdapter extends TypeAdapter<ExportFormat> {
     switch (reader.readByte()) {
       case 0:
         return ExportFormat.pdf;
-      case 1:
-        return ExportFormat.txt;
       default:
         return ExportFormat.pdf;
     }
@@ -27,9 +25,6 @@ class ExportFormatAdapter extends TypeAdapter<ExportFormat> {
     switch (obj) {
       case ExportFormat.pdf:
         writer.writeByte(0);
-        break;
-      case ExportFormat.txt:
-        writer.writeByte(1);
         break;
     }
   }

@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/password_entry.dart';
@@ -76,32 +75,27 @@ class ExportPasswordService {
       debugPrint('🔓 Decrypting passwords in memory...');
       final decryptedEntries = await _decryptEntriesInMemory(entries);
 
-      // Step 4: Generate formatted file content
-      debugPrint('📝 Generating ${config.format.displayName} file...');
-      final Uint8List fileBytes;
+      // Step 4: Generate PDF file
+      debugPrint('📝 Generating password-protected PDF...');
+      final Uint8List fileBytes = await PdfGeneratorService().createPdf(
+        decryptedEntries,
+        config,
+        password: config.password, // Pass password for PDF encryption
+      );
 
-      switch (config.format) {
-        case ExportFormat.txt:
-          fileBytes = await generateTxtExport(decryptedEntries, config);
-          break;
-        case ExportFormat.pdf:
-          fileBytes = await PdfGeneratorService().createPdf(
-            decryptedEntries,
-            config,
-            password: config.password, // Pass password for PDF encryption
-          );
-          break;
+      debugPrint('✅ PDF generated: ${fileBytes.length} bytes');
+
+      // Step 5: Handle destination
+      if (config.destination == ExportDestination.email) {
+        // TODO: Implement email export
+        debugPrint('📧 Email export not yet implemented');
+        throw Exception('Email export feature is coming soon!');
       }
 
-      debugPrint('✅ File generated: ${fileBytes.length} bytes');
-
-      // Step 5: Save file directly (unencrypted)
-      // Note: PDF/TXT files are saved as-is for easy viewing
-      debugPrint('💾 Saving file...');
+      // Save to device
+      debugPrint('💾 Saving file to device...');
       final timestamp = _getTimestamp();
-      final fileName = config.format == ExportFormat.pdf
-          ? 'armor_export_$timestamp.pdf'
-          : 'armor_export_$timestamp.txt';
+      final fileName = 'armor_export_$timestamp.pdf';
 
       final filePath = await saveExportedFile(fileBytes, fileName);
 
@@ -187,142 +181,6 @@ class ExportPasswordService {
   /// Generate TXT export file
   ///
   /// Creates a human-readable plain text file with all password entries
-  /// Format is clean and easy to read, suitable for printing or backup
-  Future<Uint8List> generateTxtExport(
-    List<Map<String, dynamic>> entries,
-    ExportConfig config,
-  ) async {
-    final buffer = StringBuffer();
-
-    // Header
-    buffer.writeln('=' * 70);
-    buffer.writeln('ARMOR PASSWORD MANAGER - ENCRYPTED EXPORT');
-    buffer.writeln('=' * 70);
-    buffer.writeln();
-    buffer.writeln(
-      'Generated: ${DateTime.now().toLocal().toString().split('.')[0]}',
-    );
-    buffer.writeln('Total Entries: ${entries.length}');
-    buffer.writeln('Format: Plain Text (TXT)');
-    buffer.writeln('Encryption: AES-256-GCM');
-    buffer.writeln();
-    buffer.writeln('=' * 70);
-    buffer.writeln();
-    buffer.writeln('🔒 ENCRYPTION NOTICE');
-    buffer.writeln('-' * 70);
-    buffer.writeln('This file is encrypted with AES-256-GCM encryption.');
-    buffer.writeln(
-      'You will need the password you set during export to decrypt it.',
-    );
-    buffer.writeln('Keep this password safe and separate from this file.');
-    buffer.writeln();
-    buffer.writeln('⚠️  SECURITY WARNING');
-    buffer.writeln('-' * 70);
-    buffer.writeln('• Store this file in a secure location');
-    buffer.writeln(
-      '• Do NOT share the decryption password via insecure channels',
-    );
-    buffer.writeln(
-      '• Delete this file after importing to another password manager',
-    );
-    buffer.writeln(
-      '• Consider storing on encrypted USB drive or secure cloud storage',
-    );
-    buffer.writeln();
-    buffer.writeln('=' * 70);
-    buffer.writeln();
-
-    // Entries
-    for (int i = 0; i < entries.length; i++) {
-      final entry = entries[i];
-
-      buffer.writeln();
-      buffer.writeln('━' * 70);
-      buffer.writeln('ENTRY #${i + 1}: ${entry['title']}');
-      buffer.writeln('━' * 70);
-      buffer.writeln();
-
-      // Metadata
-      if (entry['category'] != null &&
-          entry['category'].toString().isNotEmpty) {
-        buffer.writeln('Category: ${entry['category']}');
-      }
-
-      if (entry['description'] != null &&
-          entry['description'].toString().isNotEmpty) {
-        buffer.writeln('Description: ${entry['description']}');
-      }
-
-      buffer.writeln('Created: ${_formatDate(entry['createdAt'])}');
-      buffer.writeln('Last Modified: ${_formatDate(entry['updatedAt'])}');
-
-      if (entry['lastAccessedAt'] != null) {
-        buffer.writeln(
-          'Last Accessed: ${_formatDate(entry['lastAccessedAt'])}',
-        );
-      }
-
-      buffer.writeln('Access Count: ${entry['accessCount'] ?? 0}');
-      buffer.writeln('Favorite: ${entry['isFavorite'] ? 'Yes ⭐' : 'No'}');
-
-      if (entry['isArchived']) {
-        buffer.writeln('Status: 📦 Archived');
-      }
-
-      // Fields
-      buffer.writeln();
-      buffer.writeln('Credentials & Information:');
-      buffer.writeln('-' * 70);
-
-      final fields = entry['fields'] as List<Map<String, dynamic>>;
-      for (final field in fields) {
-        final label = field['label'] as String;
-        final value = field['value'] as String;
-        final isHidden = field['isHidden'] as bool;
-
-        final securityIcon = isHidden ? '🔐' : '📝';
-        final requiredMark = (field['isRequired'] as bool) ? '*' : '';
-
-        buffer.writeln('  $securityIcon $label$requiredMark: $value');
-      }
-
-      // Tags
-      if (config.includeTags && entry['tags'] != null) {
-        final tags = entry['tags'] as List<String>;
-        if (tags.isNotEmpty) {
-          buffer.writeln();
-          buffer.writeln('Tags: ${tags.join(', ')}');
-        }
-      }
-
-      // Notes (from the Notes field, not description)
-      if (config.includeNotes && entry['notes'] != null) {
-        final notes = entry['notes'] as String;
-        if (notes.isNotEmpty) {
-          buffer.writeln();
-          buffer.writeln('📝 Notes:');
-          buffer.writeln('  $notes');
-        }
-      }
-
-      buffer.writeln();
-      buffer.writeln('-' * 70);
-    }
-
-    // Footer
-    buffer.writeln();
-    buffer.writeln('=' * 70);
-    buffer.writeln('END OF EXPORT');
-    buffer.writeln('=' * 70);
-    buffer.writeln();
-    buffer.writeln('Exported from Armor Password Manager');
-    buffer.writeln('https://github.com/your-repo/armor');
-    buffer.writeln();
-
-    // Convert to bytes
-    return Uint8List.fromList(utf8.encode(buffer.toString()));
-  }
-
   /// Save exported file to device storage
   ///
   /// Android: /storage/emulated/0/Download/Armor/
@@ -367,17 +225,6 @@ class ExportPasswordService {
       debugPrint('❌ Failed to save file: $e');
       return null;
     }
-  }
-
-  /// Format DateTime for display
-  String _formatDate(dynamic date) {
-    if (date == null) return 'N/A';
-
-    if (date is DateTime) {
-      return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-    }
-
-    return date.toString();
   }
 
   /// Get export directory path for display

@@ -17,7 +17,9 @@ class _ExportDialogState extends State<ExportDialog> {
   final _passwordController = TextEditingController();
 
   // Export configuration
-  ExportFormat _selectedFormat = ExportFormat.pdf;
+  ExportFormat _selectedFormat = ExportFormat.pdf; // PDF only now
+  ExportDestination _selectedDestination = ExportDestination.device;
+  final _emailController = TextEditingController();
   bool _useDefaultPassword = false;
   bool _includeArchived = false;
   bool _includeNotes = true;
@@ -38,6 +40,7 @@ class _ExportDialogState extends State<ExportDialog> {
   @override
   void dispose() {
     _passwordController.dispose();
+    _emailController.dispose();
     super.dispose();
   }
 
@@ -65,19 +68,12 @@ class _ExportDialogState extends State<ExportDialog> {
         ? _totalEntries + _archivedEntries
         : _totalEntries;
 
-    // Rough estimates based on format
-    if (_selectedFormat == ExportFormat.pdf) {
-      // PDF: ~15KB base + ~8KB per entry
-      final sizeKB = 15 + (count * 8);
-      if (sizeKB > 1024) {
-        return '${(sizeKB / 1024).toStringAsFixed(1)} MB';
-      }
-      return '$sizeKB KB';
-    } else {
-      // TXT: ~5KB base + ~2KB per entry
-      final sizeKB = 5 + (count * 2);
-      return '$sizeKB KB';
+    // PDF: ~15KB base + ~8KB per entry
+    final sizeKB = 15 + (count * 8);
+    if (sizeKB > 1024) {
+      return '${(sizeKB / 1024).toStringAsFixed(1)} MB';
     }
+    return '$sizeKB KB';
   }
 
   /// Validate and initiate export
@@ -103,7 +99,11 @@ class _ExportDialogState extends State<ExportDialog> {
       // Create export configuration
       final config = ExportConfig(
         format: _selectedFormat,
+        destination: _selectedDestination,
         password: _useDefaultPassword ? '' : _passwordController.text.trim(),
+        email: _selectedDestination == ExportDestination.email
+            ? _emailController.text.trim()
+            : null,
         useDefaultPassword: _useDefaultPassword,
         includeArchived: _includeArchived,
         includeNotes: _includeNotes,
@@ -153,8 +153,8 @@ class _ExportDialogState extends State<ExportDialog> {
 
                   const SizedBox(height: 24),
 
-                  // Format selector
-                  _buildFormatSelector(theme),
+                  // Destination selector
+                  _buildDestinationSelector(theme),
 
                   const SizedBox(height: 20),
 
@@ -230,13 +230,13 @@ class _ExportDialogState extends State<ExportDialog> {
     );
   }
 
-  /// Build format selector
-  Widget _buildFormatSelector(ThemeData theme) {
+  /// Build destination selector
+  Widget _buildDestinationSelector(ThemeData theme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Export Format',
+          'Export Destination',
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
           ),
@@ -245,85 +245,153 @@ class _ExportDialogState extends State<ExportDialog> {
         Row(
           children: [
             Expanded(
-              child: _buildFormatOption(
+              child: _buildDestinationOption(
                 theme,
-                ExportFormat.pdf,
-                Iconsax.document,
-                'PDF',
-                'Professional document',
+                ExportDestination.device,
+                Iconsax.mobile,
+                'Device',
+                'Save to device storage',
+                false,
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: _buildFormatOption(
+              child: _buildDestinationOption(
                 theme,
-                ExportFormat.txt,
-                Iconsax.document_text,
-                'TXT',
-                'Plain text file',
+                ExportDestination.email,
+                Iconsax.sms,
+                'Email',
+                'Coming Soon',
+                true,
               ),
             ),
           ],
         ),
+        // Show email input if email destination is selected (for future use)
+        if (_selectedDestination == ExportDestination.email) ...[
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.orange.withOpacity(0.3)),
+            ),
+            child: Row(
+              children: [
+                Icon(Iconsax.info_circle, color: Colors.orange, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Email export feature is coming soon! Please use Device export for now.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: Colors.orange.shade900,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }
 
-  /// Build single format option
-  Widget _buildFormatOption(
+  /// Build single destination option
+  Widget _buildDestinationOption(
     ThemeData theme,
-    ExportFormat format,
+    ExportDestination destination,
     IconData icon,
     String title,
     String subtitle,
+    bool isComingSoon,
   ) {
-    final isSelected = _selectedFormat == format;
+    final isSelected = _selectedDestination == destination;
+    final isDisabled = isComingSoon;
 
     return InkWell(
-      onTap: () => setState(() => _selectedFormat = format),
+      onTap: isDisabled
+          ? null
+          : () => setState(() => _selectedDestination = destination),
       borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: isSelected
-                ? theme.colorScheme.primary
-                : theme.colorScheme.outline.withOpacity(0.3),
-            width: isSelected ? 2 : 1,
-          ),
-          borderRadius: BorderRadius.circular(12),
-          color: isSelected
-              ? theme.colorScheme.primary.withOpacity(0.05)
-              : null,
-        ),
-        child: Column(
-          children: [
-            Icon(
-              icon,
+      child: Opacity(
+        opacity: isDisabled ? 0.5 : 1.0,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            border: Border.all(
               color: isSelected
                   ? theme.colorScheme.primary
-                  : theme.colorScheme.onSurface.withOpacity(0.5),
-              size: 32,
+                  : theme.colorScheme.outline.withOpacity(0.3),
+              width: isSelected ? 2 : 1,
             ),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: isSelected
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.onSurface,
+            borderRadius: BorderRadius.circular(12),
+            color: isSelected
+                ? theme.colorScheme.primary.withOpacity(0.05)
+                : null,
+          ),
+          child: Column(
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(
+                    icon,
+                    color: isSelected
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.onSurface.withOpacity(0.5),
+                    size: 32,
+                  ),
+                  if (isComingSoon)
+                    Positioned(
+                      top: -8,
+                      right: -8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.orange,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          'SOON',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: Colors.white,
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.6),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: isSelected
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface,
+                ),
               ),
-              textAlign: TextAlign.center,
-            ),
-          ],
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: isComingSoon
+                      ? Colors.orange
+                      : theme.colorScheme.onSurface.withOpacity(0.6),
+                  fontWeight: isComingSoon
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -2,43 +2,53 @@ import 'package:hive/hive.dart';
 
 part 'export_models.g.dart';
 
-/// Export file format options
+/// Export file format options (PDF only now)
 @HiveType(typeId: 10)
 enum ExportFormat {
   @HiveField(0)
   pdf,
-
-  @HiveField(1)
-  txt,
 }
 
 /// Extension methods for ExportFormat
 extension ExportFormatExtension on ExportFormat {
   String get displayName {
-    switch (this) {
-      case ExportFormat.pdf:
-        return 'PDF';
-      case ExportFormat.txt:
-        return 'TXT';
-    }
+    return 'PDF';
   }
 
   String get fileExtension {
+    return 'pdf';
+  }
+
+  String get description {
+    return 'Password-protected PDF with industry-standard encryption';
+  }
+}
+
+/// Export destination options
+enum ExportDestination { device, email }
+
+/// Extension methods for ExportDestination
+extension ExportDestinationExtension on ExportDestination {
+  String get displayName {
     switch (this) {
-      case ExportFormat.pdf:
-        return 'pdf';
-      case ExportFormat.txt:
-        return 'txt';
+      case ExportDestination.device:
+        return 'Device';
+      case ExportDestination.email:
+        return 'Email';
     }
   }
 
   String get description {
     switch (this) {
-      case ExportFormat.pdf:
-        return 'Professional document format with formatting';
-      case ExportFormat.txt:
-        return 'Plain text format, universal compatibility';
+      case ExportDestination.device:
+        return 'Save to device storage';
+      case ExportDestination.email:
+        return 'Send via email (Coming Soon)';
     }
+  }
+
+  bool get isComingSoon {
+    return this == ExportDestination.email;
   }
 }
 
@@ -177,7 +187,9 @@ class ExportResult {
 /// Configuration for an export operation
 class ExportConfig {
   final ExportFormat format;
+  final ExportDestination destination;
   final String password;
+  final String? email; // For email destination
   final bool useDefaultPassword;
   final bool includeArchived;
   final bool includeNotes;
@@ -186,8 +198,10 @@ class ExportConfig {
   final String? customFileName;
 
   ExportConfig({
-    required this.format,
+    this.format = ExportFormat.pdf, // PDF is now default
+    this.destination = ExportDestination.device,
     required this.password,
+    this.email,
     this.useDefaultPassword = false,
     this.includeArchived = false,
     this.includeNotes = true,
