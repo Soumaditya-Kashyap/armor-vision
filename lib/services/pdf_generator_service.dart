@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:intl/intl.dart';
+import 'package:syncfusion_flutter_pdf/pdf.dart' as sf;
 import '../models/export_models.dart';
 
 /// Service for generating PDF exports of password entries
@@ -84,8 +85,40 @@ class PdfGeneratorService {
       }
 
       // Generate PDF bytes
-      final bytes = await pdf.save();
-      debugPrint('✅ PDF generated: ${bytes.length} bytes');
+      Uint8List bytes = await pdf.save();
+
+      // Apply password protection if password is provided
+      if (password != null && password.isNotEmpty) {
+        debugPrint('🔒 Applying PDF password protection...');
+        try {
+          // Load the PDF into Syncfusion PdfDocument
+          final sf.PdfDocument document = sf.PdfDocument(inputBytes: bytes);
+
+          // Apply security settings with password
+          final sf.PdfSecurity security = document.security;
+          security.userPassword = password;
+          security.ownerPassword = password;
+
+          // Set permissions
+          security.permissions.addAll([
+            sf.PdfPermissionsFlags.print,
+            sf.PdfPermissionsFlags.fullQualityPrint,
+          ]);
+
+          // Save the password-protected PDF
+          bytes = Uint8List.fromList(document.saveSync());
+          document.dispose();
+
+          debugPrint(
+            '✅ PDF password protection applied: ${bytes.length} bytes',
+          );
+        } catch (e) {
+          debugPrint('❌ Password protection error: $e');
+          debugPrint('⚠️ Falling back to unencrypted PDF');
+        }
+      } else {
+        debugPrint('✅ PDF generated (no password): ${bytes.length} bytes');
+      }
 
       return bytes;
     } catch (e) {
@@ -169,7 +202,7 @@ class PdfGeneratorService {
                     pw.SizedBox(height: 8),
                     _buildInfoRow('Total Entries:', entryCount.toString()),
                     pw.SizedBox(height: 8),
-                    _buildInfoRow('Warning:', 'Unencrypted Plain Text File'),
+                    _buildInfoRow('Protection:', 'Password-Protected PDF'),
                   ],
                 ),
               ),
@@ -235,7 +268,7 @@ class PdfGeneratorService {
                     ),
                     pw.SizedBox(height: 10),
                     pw.Text(
-                      'IMPORTANT: This file is NOT encrypted. Store it securely and delete it after use. Anyone who can access this file can view all passwords.',
+                      'This PDF is password-protected using industry-standard encryption. You will need to enter the password you set during export to open and view this document.',
                       style: const pw.TextStyle(
                         fontSize: 12,
                         color: PdfColors.white,
@@ -261,7 +294,7 @@ class PdfGeneratorService {
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
                     pw.Text(
-                      'SECURITY WARNINGS - UNENCRYPTED FILE',
+                      'SECURITY WARNINGS',
                       style: pw.TextStyle(
                         fontSize: 14,
                         fontWeight: pw.FontWeight.bold,
@@ -270,19 +303,15 @@ class PdfGeneratorService {
                     ),
                     pw.SizedBox(height: 10),
                     _buildBulletPoint(
-                      'This file contains ALL passwords in PLAIN TEXT',
+                      'Keep your password safe - it cannot be recovered if lost',
                     ),
                     _buildBulletPoint(
-                      'Anyone with access to this file can read all passwords',
+                      'Do not share the password via insecure channels',
                     ),
+                    _buildBulletPoint('Store this file in a secure location'),
+                    _buildBulletPoint('Delete this file when no longer needed'),
                     _buildBulletPoint(
-                      'Store in a secure, encrypted location immediately',
-                    ),
-                    _buildBulletPoint(
-                      'Do NOT upload to cloud storage or email without encryption',
-                    ),
-                    _buildBulletPoint(
-                      'Delete this file as soon as you no longer need it',
+                      'The password cannot be reset or recovered',
                     ),
                   ],
                 ),

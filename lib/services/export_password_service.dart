@@ -88,6 +88,7 @@ class ExportPasswordService {
           fileBytes = await PdfGeneratorService().createPdf(
             decryptedEntries,
             config,
+            password: config.password, // Pass password for PDF encryption
           );
           break;
       }

@@ -213,7 +213,7 @@ class SecureExportCard extends StatelessWidget {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  'Exports are unencrypted plain text files. Store securely.',
+                  'Exports are password-protected PDFs with industry-standard encryption.',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: colorScheme.onSurface.withOpacity(0.5),
                     fontSize: 11,

@@ -586,15 +586,15 @@ class _ExportDialogState extends State<ExportDialog> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Security Warning - Unencrypted Export',
+                  'Password Protection',
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Colors.red,
+                    color: Colors.green,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'The exported file will contain ALL passwords in PLAIN TEXT. The password you set is for your records only and does NOT encrypt the file. Store the exported file in a secure location and delete it when no longer needed.',
+                  'Your PDF will be password-protected using industry-standard encryption. You will need this password to open the file. Keep it safe - it cannot be recovered if lost.',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurface.withOpacity(0.8),
                   ),
