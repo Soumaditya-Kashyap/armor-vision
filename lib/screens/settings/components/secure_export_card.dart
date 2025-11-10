@@ -3,7 +3,7 @@ import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
 
 /// Card component for Secure Export feature in Settings
-class SecureExportCard extends StatelessWidget {
+class SecureExportCard extends StatefulWidget {
   final DateTime? lastExportDate;
   final VoidCallback onExportNow;
   final VoidCallback onSetDefaultPassword;
@@ -16,6 +16,13 @@ class SecureExportCard extends StatelessWidget {
     required this.onSetDefaultPassword,
     this.hasDefaultPassword = false,
   });
+
+  @override
+  State<SecureExportCard> createState() => _SecureExportCardState();
+}
+
+class _SecureExportCardState extends State<SecureExportCard> {
+  bool _isExpanded = false;
 
   /// Format the last export date for display
   String _formatLastExport(DateTime date) {
@@ -49,178 +56,248 @@ class SecureExportCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
       ),
-      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header with icon
-          Row(
-            children: [
-              // Icon container
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: colorScheme.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Iconsax.document_download,
-                  color: colorScheme.primary,
-                  size: 24,
-                ),
-              ),
-
-              const SizedBox(width: 16),
-
-              // Title and subtitle
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Secure Export',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Export passwords as encrypted files',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurface.withOpacity(0.6),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          // Last export info (if available)
-          if (lastExportDate != null) ...[
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: colorScheme.primaryContainer.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: colorScheme.primary.withOpacity(0.2)),
-              ),
-              child: Row(
+          // Header with icon (collapsible)
+          InkWell(
+            onTap: () {
+              setState(() {
+                _isExpanded = !_isExpanded;
+              });
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Iconsax.clock, size: 16, color: colorScheme.primary),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Last export: ',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colorScheme.onSurface.withOpacity(0.6),
-                    ),
-                  ),
-                  Text(
-                    _formatLastExport(lastExportDate!),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.primary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-
-          const SizedBox(height: 16),
-
-          // Action buttons
-          Row(
-            children: [
-              // Export Now button (primary)
-              Expanded(
-                flex: 2,
-                child: FilledButton.icon(
-                  onPressed: onExportNow,
-                  icon: const Icon(Iconsax.document_upload, size: 18),
-                  label: const Text('Export Now'),
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(width: 10),
-
-              // Set Default Password button (secondary)
-              Expanded(
-                flex: 1,
-                child: OutlinedButton(
-                  onPressed: onSetDefaultPassword,
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    side: BorderSide(
-                      color: hasDefaultPassword
-                          ? colorScheme.primary.withOpacity(0.5)
-                          : colorScheme.outline.withOpacity(0.5),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  Row(
                     children: [
-                      Icon(
-                        hasDefaultPassword
-                            ? Iconsax.lock_1
-                            : Iconsax.lock_slash,
-                        size: 16,
-                        color: hasDefaultPassword
-                            ? colorScheme.primary
-                            : colorScheme.onSurface.withOpacity(0.6),
+                      // Icon container
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Iconsax.document_download,
+                          color: colorScheme.primary,
+                          size: 24,
+                        ),
                       ),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(
-                          hasDefaultPassword ? 'Password' : 'Set Pass',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: hasDefaultPassword
-                                ? colorScheme.primary
-                                : colorScheme.onSurface.withOpacity(0.8),
-                          ),
-                          overflow: TextOverflow.ellipsis,
+
+                      const SizedBox(width: 16),
+
+                      // Title and subtitle
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Secure Export',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Export passwords as encrypted files',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colorScheme.onSurface.withOpacity(0.6),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Expand/collapse icon
+                      AnimatedRotation(
+                        duration: const Duration(milliseconds: 400),
+                        curve: Curves.easeInOutCubic,
+                        turns: _isExpanded ? 0.5 : 0,
+                        child: Icon(
+                          Icons.expand_more_rounded,
+                          color: colorScheme.onSurface.withOpacity(0.7),
                         ),
                       ),
                     ],
                   ),
-                ),
+
+                  // Last export info (always visible)
+                  if (widget.lastExportDate != null) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer.withOpacity(0.3),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: colorScheme.primary.withOpacity(0.2),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Iconsax.clock,
+                            size: 16,
+                            color: colorScheme.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Last export: ',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurface.withOpacity(0.6),
+                            ),
+                          ),
+                          Text(
+                            _formatLastExport(widget.lastExportDate!),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: colorScheme.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
               ),
-            ],
+            ),
           ),
 
-          // Info text
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(
-                Iconsax.info_circle,
-                size: 14,
-                color: colorScheme.onSurface.withOpacity(0.5),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  'Exports are password-protected PDFs with industry-standard encryption.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.onSurface.withOpacity(0.5),
-                    fontSize: 11,
-                  ),
-                ),
-              ),
-            ],
+          // Expandable content (Action buttons)
+          AnimatedSize(
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeInOutCubic,
+            child: _isExpanded
+                ? AnimatedOpacity(
+                    duration: const Duration(milliseconds: 300),
+                    opacity: 1.0,
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                        left: 20,
+                        right: 20,
+                        bottom: 20,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 16),
+                          // Action buttons
+                          Row(
+                            children: [
+                              // Export Now button (primary)
+                              Expanded(
+                                flex: 2,
+                                child: FilledButton.icon(
+                                  onPressed: widget.onExportNow,
+                                  icon: const Icon(
+                                    Iconsax.document_upload,
+                                    size: 18,
+                                  ),
+                                  label: const Text('Export Now'),
+                                  style: FilledButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(width: 10),
+
+                              // Set Default Password button (secondary)
+                              Expanded(
+                                flex: 1,
+                                child: OutlinedButton(
+                                  onPressed: widget.onSetDefaultPassword,
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    side: BorderSide(
+                                      color: widget.hasDefaultPassword
+                                          ? colorScheme.primary.withOpacity(0.5)
+                                          : colorScheme.outline.withOpacity(
+                                              0.5,
+                                            ),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        widget.hasDefaultPassword
+                                            ? Iconsax.lock_1
+                                            : Iconsax.lock_slash,
+                                        size: 16,
+                                        color: widget.hasDefaultPassword
+                                            ? colorScheme.primary
+                                            : colorScheme.onSurface.withOpacity(
+                                                0.6,
+                                              ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Flexible(
+                                        child: Text(
+                                          widget.hasDefaultPassword
+                                              ? 'Password'
+                                              : 'Set Pass',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            color: widget.hasDefaultPassword
+                                                ? colorScheme.primary
+                                                : colorScheme.onSurface
+                                                      .withOpacity(0.8),
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          // Info text
+                          const SizedBox(height: 12),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Iconsax.info_circle,
+                                size: 14,
+                                color: colorScheme.onSurface.withOpacity(0.5),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  'Exports are password-protected PDFs with industry-standard encryption.',
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: colorScheme.onSurface.withOpacity(
+                                      0.5,
+                                    ),
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : const SizedBox(height: 0, width: double.infinity),
           ),
         ],
       ),
