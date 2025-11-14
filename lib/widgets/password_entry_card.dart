@@ -96,11 +96,9 @@ class PasswordEntryCard extends StatelessWidget {
       if (categoryNames.length == 1) return categoryNames[0];
       if (categoryNames.length == 2)
         return '${categoryNames[0]}, ${categoryNames[1]}';
-      if (categoryNames.length == 3)
-        return '${categoryNames[0]}, ${categoryNames[1]}, ${categoryNames[2]}';
 
-      // For more than 3 categories, show first 2 and count
-      return '${categoryNames[0]}, ${categoryNames[1]} +${categoryNames.length - 2}';
+      // For more than 2 categories, show "Multi-Category"
+      return 'Multi-Category';
     } catch (e) {
       // If database lookup fails, return the category ID as fallback
       return entry.category!;

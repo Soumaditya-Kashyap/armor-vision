@@ -253,8 +253,10 @@ class _AddEntryDialogState extends State<AddEntryDialog>
                 if (!isLandscape) const SizedBox(height: 4),
                 if (!isLandscape)
                   Text(
-                    _selectedCategory != null
-                        ? 'Category: ${_formatCategoryName(_selectedCategory!)}'
+                    _selectedCategory != null ||
+                            (widget.preSelectedCategories != null &&
+                                widget.preSelectedCategories!.isNotEmpty)
+                        ? 'Category: ${_getCategoryDisplayForHeader()}'
                         : 'Create a new password entry',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(
@@ -828,6 +830,44 @@ class _AddEntryDialogState extends State<AddEntryDialog>
     );
   }
 
+  String _getCategoryDisplayForHeader() {
+    // For new entries with multiple categories selected
+    if (widget.existingEntry == null &&
+        widget.preSelectedCategories != null &&
+        widget.preSelectedCategories!.isNotEmpty) {
+      return _getCategoryNamesString(widget.preSelectedCategories!);
+    }
+
+    // For existing entries, extract all categories (main + those in tags)
+    if (widget.existingEntry != null) {
+      final categoryIds = <String>[];
+
+      // Add main category
+      if (_selectedCategory != null) {
+        categoryIds.add(_selectedCategory!);
+      }
+
+      // Extract additional categories from tags
+      final additionalCategoryIds = _selectedTags
+          .where((tag) => tag.startsWith('CAT_'))
+          .map((tag) => tag.substring(4))
+          .toList();
+
+      categoryIds.addAll(additionalCategoryIds);
+
+      if (categoryIds.isNotEmpty) {
+        return _getCategoryNamesString(categoryIds);
+      }
+    }
+
+    // Single category or default
+    if (_selectedCategory != null) {
+      return _formatCategoryName(_selectedCategory!);
+    }
+
+    return 'Uncategorized';
+  }
+
   String _getCategoryNamesString(List<String> categoryIds) {
     // Get category names for the given IDs
     try {
@@ -853,9 +893,8 @@ class _AddEntryDialogState extends State<AddEntryDialog>
       if (names.length == 1) return names[0];
       if (names.length == 2) return '${names[0]} and ${names[1]}';
 
-      // For 3 items: "A, B and C"
-      final allButLast = names.sublist(0, names.length - 1).join(', ');
-      return '$allButLast and ${names.last}';
+      // For 3+ items, show "Multi-Category"
+      return 'Multi-Category';
     } catch (e) {
       return 'multiple categories';
     }
