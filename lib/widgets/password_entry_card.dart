@@ -50,6 +50,29 @@ class PasswordEntryCard extends StatelessWidget {
     return AppHelpers.getEntryIcon(entry);
   }
 
+  /// Get the category name from the category ID
+  String _getCategoryName() {
+    if (entry.category == null || entry.category!.isEmpty) {
+      return 'Uncategorized';
+    }
+
+    try {
+      // Access the categories box directly (synchronous)
+      final categoriesBox = Hive.box<Category>('categories');
+
+      // Find the matching category by ID
+      final category = categoriesBox.values.cast<Category?>().firstWhere(
+        (cat) => cat?.id == entry.category,
+        orElse: () => null,
+      );
+
+      return category?.name ?? entry.category!;
+    } catch (e) {
+      // If database lookup fails, return the category ID as fallback
+      return entry.category!;
+    }
+  }
+
   /// Get the color for this entry based on its category
   Color _getEntryColor(BuildContext context) {
     // If entry has a category, try to get the actual category color from database
@@ -257,7 +280,7 @@ class PasswordEntryCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          entry.category!.toUpperCase(),
+                          _getCategoryName().toUpperCase(),
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: entryColor,
                             fontWeight: FontWeight.w600,
@@ -414,7 +437,7 @@ class PasswordEntryCard extends StatelessWidget {
                               if (entry.category != null) ...[
                                 Flexible(
                                   child: Text(
-                                    entry.category!.toUpperCase(),
+                                    _getCategoryName().toUpperCase(),
                                     style: theme.textTheme.labelSmall?.copyWith(
                                       color: AppHelpers.getEntryColor(
                                         entry.color,

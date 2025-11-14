@@ -21,13 +21,19 @@ class CategoriesGrid extends StatelessWidget {
       return _buildEmptyState(context);
     }
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    final crossAxisCount = screenWidth < 360 ? 2 : 2; // Keep 2 columns
+    final aspectRatio = screenWidth < 360
+        ? 0.95
+        : 1.0; // Adjust aspect ratio for small screens
+
     return GridView.builder(
       padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
-        childAspectRatio: 1.1,
+        childAspectRatio: aspectRatio,
       ),
       itemCount: categories.length,
       itemBuilder: (context, index) {
@@ -76,17 +82,18 @@ class CategoriesGrid extends StatelessWidget {
           onTap: () => onCategoryTap(category),
           borderRadius: BorderRadius.circular(20),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 // Icon with enhanced design
                 Hero(
                   tag: 'category_${category.id}',
                   child: Container(
-                    width: 64,
-                    height: 64,
+                    width: 56,
+                    height: 56,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
@@ -96,7 +103,7 @@ class CategoriesGrid extends StatelessWidget {
                           categoryColor.withOpacity(0.7),
                         ],
                       ),
-                      borderRadius: BorderRadius.circular(18),
+                      borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
                           color: categoryColor.withOpacity(0.4),
@@ -108,15 +115,15 @@ class CategoriesGrid extends StatelessWidget {
                     child: Icon(
                       IconHelper.getIconData(category.iconName),
                       color: Colors.white,
-                      size: 32,
+                      size: 28,
                     ),
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(height: 8),
                 // Category name
                 Text(
                   category.name,
-                  style: theme.textTheme.titleMedium?.copyWith(
+                  style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: colorScheme.onSurface,
                     letterSpacing: 0.5,
@@ -125,12 +132,12 @@ class CategoriesGrid extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 // Entry count with badge style
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 4,
+                    horizontal: 10,
+                    vertical: 3,
                   ),
                   decoration: BoxDecoration(
                     color: categoryColor.withOpacity(0.25),
@@ -145,7 +152,7 @@ class CategoriesGrid extends StatelessWidget {
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: categoryColor.withOpacity(0.9),
                       fontWeight: FontWeight.bold,
-                      fontSize: 12,
+                      fontSize: 11,
                     ),
                   ),
                 ),
