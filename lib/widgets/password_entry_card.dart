@@ -50,7 +50,7 @@ class PasswordEntryCard extends StatelessWidget {
     return AppHelpers.getEntryIcon(entry);
   }
 
-  /// Get the category name from the category ID
+  /// Get the category name(s) from the category ID and tags
   String _getCategoryName() {
     if (entry.category == null || entry.category!.isEmpty) {
       return 'Uncategorized';
@@ -59,14 +59,48 @@ class PasswordEntryCard extends StatelessWidget {
     try {
       // Access the categories box directly (synchronous)
       final categoriesBox = Hive.box<Category>('categories');
+      final categoryNames = <String>[];
 
-      // Find the matching category by ID
-      final category = categoriesBox.values.cast<Category?>().firstWhere(
+      // Get the main category name
+      final mainCategory = categoriesBox.values.cast<Category?>().firstWhere(
         (cat) => cat?.id == entry.category,
         orElse: () => null,
       );
 
-      return category?.name ?? entry.category!;
+      if (mainCategory != null) {
+        categoryNames.add(mainCategory.name);
+      } else {
+        categoryNames.add(entry.category!);
+      }
+
+      // Check if there are additional categories stored in tags with CAT_ prefix
+      final additionalCategoryIds = entry.tags
+          .where((tag) => tag.startsWith('CAT_'))
+          .map((tag) => tag.substring(4)) // Remove CAT_ prefix
+          .toList();
+
+      // Get names for additional categories
+      for (final categoryId in additionalCategoryIds) {
+        final category = categoriesBox.values.cast<Category?>().firstWhere(
+          (cat) => cat?.id == categoryId,
+          orElse: () => null,
+        );
+
+        if (category != null) {
+          categoryNames.add(category.name);
+        }
+      }
+
+      // Format the category names
+      if (categoryNames.isEmpty) return 'Uncategorized';
+      if (categoryNames.length == 1) return categoryNames[0];
+      if (categoryNames.length == 2)
+        return '${categoryNames[0]}, ${categoryNames[1]}';
+      if (categoryNames.length == 3)
+        return '${categoryNames[0]}, ${categoryNames[1]}, ${categoryNames[2]}';
+
+      // For more than 3 categories, show first 2 and count
+      return '${categoryNames[0]}, ${categoryNames[1]} +${categoryNames.length - 2}';
     } catch (e) {
       // If database lookup fails, return the category ID as fallback
       return entry.category!;

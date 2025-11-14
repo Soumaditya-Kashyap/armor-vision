@@ -706,52 +706,68 @@ class _AddEntryDialogState extends State<AddEntryDialog>
 
         await _databaseService.savePasswordEntry(entry);
       } else {
-        // CREATE NEW ENTRY - if multiple categories selected, create one entry per category
+        // CREATE NEW ENTRY
         final categoriesToSave =
             widget.preSelectedCategories != null &&
                 widget.preSelectedCategories!.isNotEmpty
             ? widget.preSelectedCategories!
             : [_selectedCategory];
 
-        // Create entries for all selected categories
-        for (final categoryId in categoriesToSave) {
-          final entry = PasswordEntry(
-            id: 'entry_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(10000)}',
-            title: _titleController.text.trim(),
-            description: _descriptionController.text.trim().isEmpty
-                ? null
-                : _descriptionController.text.trim(),
-            customFields: _customFields,
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
-            category: categoryId,
-            color: _selectedColor,
-            notes: _notesController.text.trim().isEmpty
-                ? null
-                : _notesController.text.trim(),
-            tags: _selectedTags,
-          );
-
-          await _databaseService.savePasswordEntry(entry);
-
-          // Small delay to ensure unique IDs
-          if (categoriesToSave.length > 1) {
-            await Future.delayed(const Duration(milliseconds: 10));
+        // If multiple categories selected, store additional category IDs in tags with special prefix
+        final tagsWithCategories = List<String>.from(_selectedTags);
+        if (categoriesToSave.length > 1) {
+          // Add all category IDs to tags with CAT_ prefix (skip the first one as it's the main category)
+          for (int i = 1; i < categoriesToSave.length; i++) {
+            tagsWithCategories.add('CAT_${categoriesToSave[i]}');
           }
         }
+
+        // Create ONE entry with the first category as main, others in tags
+        final entry = PasswordEntry(
+          id: 'entry_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(10000)}',
+          title: _titleController.text.trim(),
+          description: _descriptionController.text.trim().isEmpty
+              ? null
+              : _descriptionController.text.trim(),
+          customFields: _customFields,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          category:
+              categoriesToSave.first, // Use first category as main category
+          color: _selectedColor,
+          notes: _notesController.text.trim().isEmpty
+              ? null
+              : _notesController.text.trim(),
+          tags: tagsWithCategories, // Include additional categories in tags
+        );
+
+        await _databaseService.savePasswordEntry(entry);
       }
 
       if (mounted) {
         final isUpdate = widget.existingEntry != null;
         final categoryCount = widget.preSelectedCategories?.length ?? 1;
 
-        _showSnackBar(
-          isUpdate
-              ? 'Password entry updated successfully!'
-              : categoryCount > 1
-              ? 'Password entry added to $categoryCount categories!'
-              : 'Password entry saved successfully!',
-        );
+        String successMessage;
+        if (isUpdate) {
+          successMessage = 'Password entry updated successfully!';
+        } else if (categoryCount > 1) {
+          if (categoryCount <= 3) {
+            // Show category names for 1-3 categories
+            final categoryNames = _getCategoryNamesString(
+              widget.preSelectedCategories!,
+            );
+            successMessage = 'Password entry added to: $categoryNames';
+          } else {
+            // Show "Multi-Category" for more than 3 categories
+            successMessage =
+                'Password entry added to Multi-Category ($categoryCount categories)';
+          }
+        } else {
+          successMessage = 'Password entry saved successfully!';
+        }
+
+        _showSnackBar(successMessage);
 
         // Add haptic feedback
         HapticFeedback.lightImpact();
@@ -810,6 +826,39 @@ class _AddEntryDialogState extends State<AddEntryDialog>
         duration: Duration(seconds: isError ? 4 : 3),
       ),
     );
+  }
+
+  String _getCategoryNamesString(List<String> categoryIds) {
+    // Get category names for the given IDs
+    try {
+      final categoriesBox = Hive.box<Category>('categories');
+      final names = <String>[];
+
+      for (final categoryId in categoryIds) {
+        final category = categoriesBox.values.cast<Category?>().firstWhere(
+          (cat) => cat?.id == categoryId,
+          orElse: () => null,
+        );
+
+        if (category != null) {
+          names.add(category.name);
+        } else {
+          // Fallback to formatted ID if category not found
+          names.add(_formatCategoryName(categoryId));
+        }
+      }
+
+      // Join with commas and "and" for the last item
+      if (names.isEmpty) return 'categories';
+      if (names.length == 1) return names[0];
+      if (names.length == 2) return '${names[0]} and ${names[1]}';
+
+      // For 3 items: "A, B and C"
+      final allButLast = names.sublist(0, names.length - 1).join(', ');
+      return '$allButLast and ${names.last}';
+    } catch (e) {
+      return 'multiple categories';
+    }
   }
 
   String _formatCategoryName(String categoryId) {
