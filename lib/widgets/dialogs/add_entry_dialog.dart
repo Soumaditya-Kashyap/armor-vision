@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'dart:math';
 import '../../models/password_entry.dart';
 import '../../services/database_service.dart';
@@ -792,9 +793,27 @@ class _AddEntryDialogState extends State<AddEntryDialog>
     );
   }
 
-  String _formatCategoryName(String categoryName) {
-    if (categoryName.startsWith('CUSTOM_')) {
-      final parts = categoryName.split('_');
+  String _formatCategoryName(String categoryId) {
+    // Look up the actual category name from the database using the category ID
+    try {
+      final categoriesBox = Hive.box<Category>('categories');
+
+      // Find the category by ID
+      final category = categoriesBox.values.cast<Category?>().firstWhere(
+        (cat) => cat?.id == categoryId,
+        orElse: () => null,
+      );
+
+      if (category != null) {
+        return category.name;
+      }
+    } catch (e) {
+      // If lookup fails, fall through to fallback
+    }
+
+    // Fallback: format the ID string if category lookup fails
+    if (categoryId.startsWith('CUSTOM_')) {
+      final parts = categoryId.split('_');
       if (parts.length >= 2) {
         return parts[1]
             .replaceAll('_', ' ')
@@ -809,7 +828,7 @@ class _AddEntryDialogState extends State<AddEntryDialog>
       }
     }
 
-    return categoryName
+    return categoryId
         .replaceAll('_', ' ')
         .toLowerCase()
         .split(' ')
