@@ -665,9 +665,8 @@ class _AddEntryDialogState extends State<AddEntryDialog>
     });
 
     try {
-      final PasswordEntry entry;
-
       if (widget.existingEntry != null) {
+        // UPDATE EXISTING ENTRY
         // Check if any field has actually changed
         final hasChanges =
             widget.existingEntry!.title != _titleController.text.trim() ||
@@ -688,7 +687,7 @@ class _AddEntryDialogState extends State<AddEntryDialog>
             !_areTagsEqual(widget.existingEntry!.tags, _selectedTags);
 
         // Update existing entry - only update timestamp if changes were made
-        entry = widget.existingEntry!.copyWith(
+        final entry = widget.existingEntry!.copyWith(
           title: _titleController.text.trim(),
           description: _descriptionController.text.trim().isEmpty
               ? null
@@ -704,33 +703,53 @@ class _AddEntryDialogState extends State<AddEntryDialog>
               : _notesController.text.trim(),
           tags: _selectedTags,
         );
-      } else {
-        // Create new entry
-        entry = PasswordEntry(
-          id: 'entry_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(1000)}',
-          title: _titleController.text.trim(),
-          description: _descriptionController.text.trim().isEmpty
-              ? null
-              : _descriptionController.text.trim(),
-          customFields: _customFields,
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-          category: _selectedCategory,
-          color: _selectedColor,
-          notes: _notesController.text.trim().isEmpty
-              ? null
-              : _notesController.text.trim(),
-          tags: _selectedTags,
-        );
-      }
 
-      await _databaseService.savePasswordEntry(entry);
+        await _databaseService.savePasswordEntry(entry);
+      } else {
+        // CREATE NEW ENTRY - if multiple categories selected, create one entry per category
+        final categoriesToSave =
+            widget.preSelectedCategories != null &&
+                widget.preSelectedCategories!.isNotEmpty
+            ? widget.preSelectedCategories!
+            : [_selectedCategory];
+
+        // Create entries for all selected categories
+        for (final categoryId in categoriesToSave) {
+          final entry = PasswordEntry(
+            id: 'entry_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(10000)}',
+            title: _titleController.text.trim(),
+            description: _descriptionController.text.trim().isEmpty
+                ? null
+                : _descriptionController.text.trim(),
+            customFields: _customFields,
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+            category: categoryId,
+            color: _selectedColor,
+            notes: _notesController.text.trim().isEmpty
+                ? null
+                : _notesController.text.trim(),
+            tags: _selectedTags,
+          );
+
+          await _databaseService.savePasswordEntry(entry);
+
+          // Small delay to ensure unique IDs
+          if (categoriesToSave.length > 1) {
+            await Future.delayed(const Duration(milliseconds: 10));
+          }
+        }
+      }
 
       if (mounted) {
         final isUpdate = widget.existingEntry != null;
+        final categoryCount = widget.preSelectedCategories?.length ?? 1;
+
         _showSnackBar(
           isUpdate
               ? 'Password entry updated successfully!'
+              : categoryCount > 1
+              ? 'Password entry added to $categoryCount categories!'
               : 'Password entry saved successfully!',
         );
 
