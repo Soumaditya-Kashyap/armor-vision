@@ -56,11 +56,15 @@ class _CategoryEntriesScreenState extends State<CategoryEntriesScreen>
       // Get all entries that belong to this category
       final allEntries = await _databaseService.getAllPasswordEntries();
 
+      // Include entries with this category as main OR in tags with CAT_ prefix
       final categoryEntries = allEntries.where((entry) {
-        if (entry.category == null || entry.category!.isEmpty) {
-          return false;
-        }
-        return entry.category == widget.category.id;
+        // Check if this category is the main category
+        final isMainCategory = entry.category == widget.category.id;
+
+        // Check if this category is in the tags (multi-category support)
+        final isInTags = entry.tags.contains('CAT_${widget.category.id}');
+
+        return isMainCategory || isInTags;
       }).toList();
 
       // Sort by most recently updated

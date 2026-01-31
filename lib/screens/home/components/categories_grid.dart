@@ -38,8 +38,13 @@ class CategoriesGrid extends StatelessWidget {
       itemCount: categories.length,
       itemBuilder: (context, index) {
         final category = categories[index];
+        // Count entries that have this category as main OR in tags with CAT_ prefix
         final entryCount = allEntries
-            .where((e) => e.category == category.id)
+            .where(
+              (e) =>
+                  e.category == category.id ||
+                  e.tags.contains('CAT_${category.id}'),
+            )
             .length;
 
         return _buildCategoryCard(context, category, entryCount);
