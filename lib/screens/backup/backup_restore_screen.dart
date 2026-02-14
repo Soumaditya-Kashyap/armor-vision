@@ -217,6 +217,19 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen>
       // Get backup directory path
       final backupDir = await _backupService.getBackupDirectoryPath();
 
+      // Force file system to refresh and sync
+      if (backupDir != null) {
+        final dir = Directory(backupDir);
+        if (await dir.exists()) {
+          // Force directory listing to refresh the cache
+          await dir.list().toList();
+          // Add small delay to ensure file system sync
+          await Future.delayed(const Duration(milliseconds: 300));
+        }
+      }
+
+      debugPrint('📂 Opening file picker for backup restore...');
+
       // Pick .armor file
       final result = await FilePicker.platform.pickFiles(
         type: FileType.any,

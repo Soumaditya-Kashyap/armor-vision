@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:crypto/crypto.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:flutter/foundation.dart' hide Category;
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../models/password_entry.dart';
@@ -719,10 +720,32 @@ class BackupService {
       final file = File(filePath);
       await file.writeAsBytes(bytes);
 
+      // Notify Android MediaStore about the new file
+      if (Platform.isAndroid) {
+        await _scanMediaFile(filePath);
+      }
+
       return filePath;
     } catch (e) {
       debugPrint('❌ Failed to save backup file: $e');
       return null;
+    }
+  }
+
+  /// Trigger media scan on Android to make file visible in file pickers
+  Future<void> _scanMediaFile(String filePath) async {
+    if (!Platform.isAndroid) return;
+
+    try {
+      debugPrint('📡 Triggering media scan for: $filePath');
+
+      const platform = MethodChannel('com.example.armor/media_scanner');
+      await platform.invokeMethod('scanFile', {'path': filePath});
+
+      debugPrint('✅ Media scan completed');
+    } catch (e) {
+      debugPrint('⚠️ Media scan failed (file may still be visible): $e');
+      // Don't throw error - file is saved, just might take a moment to appear
     }
   }
 
