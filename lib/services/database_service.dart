@@ -245,15 +245,6 @@ class DatabaseService {
         createdAt: DateTime.now(),
         sortOrder: 8,
       ),
-      Category(
-        id: 'school',
-        name: 'School Principal',
-        description: 'Educational accounts',
-        color: EntryColor.blue,
-        iconName: 'book',
-        createdAt: DateTime.now(),
-        sortOrder: 9,
-      ),
     ];
   }
 

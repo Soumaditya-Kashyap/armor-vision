@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:io';
 import 'package:iconsax/iconsax.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../services/backup_service.dart';
 import '../../services/database_service.dart';
 import '../settings/components/section_header.dart';
@@ -15,7 +17,7 @@ class BackupRestoreScreen extends StatefulWidget {
 }
 
 class _BackupRestoreScreenState extends State<BackupRestoreScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   final BackupService _backupService = BackupService();
   final DatabaseService _databaseService = DatabaseService();
 
@@ -28,8 +30,18 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _setupAnimations();
     _loadExistingBackups();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // Reload backups when app resumes (becomes visible again)
+    if (state == AppLifecycleState.resumed) {
+      _loadExistingBackups();
+    }
   }
 
   void _setupAnimations() {
@@ -48,14 +60,31 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _animationController.dispose();
     super.dispose();
   }
 
   Future<void> _loadExistingBackups() async {
+    debugPrint('🔄 Loading existing backups...');
     final backups = await _backupService.getExistingBackups();
+    debugPrint('✅ Found ${backups.length} backup(s)');
     if (mounted) {
       setState(() => _existingBackups = backups);
+    }
+  }
+
+  Future<void> _refreshBackups() async {
+    setState(() => _isLoading = true);
+    await _loadExistingBackups();
+    if (mounted) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Found ${_existingBackups.length} backup(s)'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
     }
   }
 
@@ -92,7 +121,8 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen>
         // Update last backup date in settings
         await _updateLastBackupDate();
 
-        // Reload backups list
+        // Wait a moment for file system to update, then reload backups list
+        await Future.delayed(const Duration(milliseconds: 500));
         await _loadExistingBackups();
 
         // Show success dialog with share option
@@ -124,10 +154,74 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen>
 
   Future<void> _restoreFromFile() async {
     try {
+      // Request storage permissions
+      PermissionStatus status;
+      if (Platform.isAndroid) {
+        // Try manageExternalStorage first (Android 11+)
+        status = await Permission.manageExternalStorage.status;
+
+        if (!status.isGranted) {
+          status = await Permission.manageExternalStorage.request();
+        }
+
+        // Fallback to regular storage permission if needed
+        if (!status.isGranted) {
+          status = await Permission.storage.status;
+          if (!status.isGranted) {
+            status = await Permission.storage.request();
+          }
+        }
+      } else if (Platform.isIOS) {
+        status = await Permission.photos.status;
+        if (!status.isGranted) {
+          status = await Permission.photos.request();
+        }
+      } else {
+        status = PermissionStatus.granted;
+      }
+
+      if (status.isDenied) {
+        _showErrorSnackBar(
+          'Storage permission is required to access backup files',
+        );
+        return;
+      } else if (status.isPermanentlyDenied) {
+        // Permission permanently denied, offer to open settings
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Permission Required'),
+              content: const Text(
+                'Storage permission is permanently denied. Please enable it in app settings.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    openAppSettings();
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Open Settings'),
+                ),
+              ],
+            ),
+          );
+        }
+        return;
+      }
+
+      // Get backup directory path
+      final backupDir = await _backupService.getBackupDirectoryPath();
+
       // Pick .armor file
       final result = await FilePicker.platform.pickFiles(
         type: FileType.any,
         allowMultiple: false,
+        initialDirectory: backupDir,
       );
 
       if (result == null || result.files.isEmpty) return;
@@ -830,6 +924,13 @@ class _BackupRestoreScreenState extends State<BackupRestoreScreen>
           onPressed: () => Navigator.of(context).pop(),
           icon: const Icon(Icons.arrow_back_rounded),
         ),
+        actions: [
+          IconButton(
+            onPressed: _isLoading ? null : _refreshBackups,
+            icon: const Icon(Iconsax.refresh),
+            tooltip: 'Refresh backups list',
+          ),
+        ],
       ),
       body: FadeTransition(
         opacity: _fadeAnimation,

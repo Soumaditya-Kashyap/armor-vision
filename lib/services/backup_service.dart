@@ -741,7 +741,10 @@ class BackupService {
         backupDir = Directory('${docDir.path}/Armor/Backups');
       }
 
+      debugPrint('📁 Checking backup directory: ${backupDir.path}');
+
       if (!await backupDir.exists()) {
+        debugPrint('⚠️ Backup directory does not exist');
         return [];
       }
 
@@ -750,10 +753,13 @@ class BackupService {
           .where((entity) => entity.path.endsWith(kBackupFileExtension))
           .toList();
 
+      debugPrint('📂 Found ${files.length} .armor file(s)');
+
       final backups = <BackupFileInfo>[];
       for (final entity in files) {
         if (entity is File) {
           final stat = await entity.stat();
+          debugPrint('  ✓ ${entity.path.split('/').last} (${stat.size} bytes)');
           backups.add(
             BackupFileInfo(
               filePath: entity.path,
@@ -771,6 +777,28 @@ class BackupService {
     } catch (e) {
       debugPrint('❌ Failed to get existing backups: $e');
       return [];
+    }
+  }
+
+  /// Get backup directory path for file picker
+  Future<String?> getBackupDirectoryPath() async {
+    try {
+      String backupDirPath;
+
+      if (Platform.isAndroid) {
+        backupDirPath = '/storage/emulated/0/Download/Armor/Backups';
+      } else if (Platform.isIOS) {
+        final docDir = await getApplicationDocumentsDirectory();
+        backupDirPath = '${docDir.path}/Backups';
+      } else {
+        final docDir = await getApplicationDocumentsDirectory();
+        backupDirPath = '${docDir.path}/Armor/Backups';
+      }
+
+      return backupDirPath;
+    } catch (e) {
+      debugPrint('❌ Failed to get backup directory path: $e');
+      return null;
     }
   }
 

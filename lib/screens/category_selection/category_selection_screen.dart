@@ -327,7 +327,7 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
   Future<void> _deleteSelectedCategories() async {
     try {
       final categoriesToDelete = _allCategories
-          .where((cat) => _selectedCategories.contains(cat.name))
+          .where((cat) => _selectedCategories.contains(cat.id))
           .toList();
 
       for (final category in categoriesToDelete) {
@@ -336,7 +336,7 @@ class _CategorySelectionScreenState extends State<CategorySelectionScreen>
 
       setState(() {
         _allCategories.removeWhere(
-          (cat) => _selectedCategories.contains(cat.name),
+          (cat) => _selectedCategories.contains(cat.id),
         );
         _selectedCategories.clear();
         _isMultiSelectMode = false;
