@@ -12,10 +12,12 @@ import 'components/section_header.dart';
 import 'components/theme_selector.dart';
 import 'components/coming_soon_card.dart';
 import 'components/secure_export_card.dart';
+import 'components/backup_restore_card.dart';
 import '../../widgets/dialogs/export_dialog.dart';
 import '../../widgets/dialogs/export_progress_dialog.dart';
 import '../../widgets/dialogs/export_success_dialog.dart';
 import '../../widgets/dialogs/set_default_password_dialog.dart';
+import '../backup/backup_restore_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -264,6 +266,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  /// Open Backup & Restore screen
+  void _openBackupRestore() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => const BackupRestoreScreen()),
+    );
+  }
+
   Future<void> _updateTheme(
     BuildContext context,
     ArmorThemeMode newTheme,
@@ -348,6 +357,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onExportNow: _openExportDialog,
                 onSetDefaultPassword: _openSetDefaultPasswordDialog,
                 hasDefaultPassword: _settings?.defaultExportPassword != null,
+              ),
+
+              const SizedBox(height: 32),
+
+              // Backup & Restore Section
+              const SectionHeader(
+                title: 'Backup & Restore',
+                icon: Iconsax.shield_tick,
+              ),
+              const SizedBox(height: 16),
+              BackupRestoreCard(
+                lastBackupDate: _settings?.lastBackupAt,
+                onOpenBackupRestore: _openBackupRestore,
               ),
 
               const SizedBox(height: 32),
