@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'services/database_service.dart'; // Changed from simple_database_service.dart
 import 'screens/splash_screen.dart';
 import 'screens/settings/settings_screen.dart';
+import 'screens/onboarding/onboarding_screen.dart';
 import 'providers/theme_provider.dart';
 
 void main() async {
@@ -18,10 +19,15 @@ void main() async {
   );
 
   // Initialize database with error handling for migration
+  bool showOnboarding = false;
   try {
     final databaseService = DatabaseService();
     await databaseService.initialize();
     print('Database initialized successfully');
+
+    // Check onboarding status BEFORE showing any screen
+    final settings = await databaseService.getAppSettings();
+    showOnboarding = !(settings.hasCompletedOnboarding ?? false);
   } catch (e) {
     print('Failed to initialize database: $e');
     // If database fails to initialize due to schema changes, we could potentially
@@ -32,13 +38,20 @@ void main() async {
   final themeProvider = ThemeProvider();
   await themeProvider.initialize();
 
-  runApp(ArmorApp(themeProvider: themeProvider));
+  runApp(
+    ArmorApp(themeProvider: themeProvider, showOnboarding: showOnboarding),
+  );
 }
 
 class ArmorApp extends StatefulWidget {
   final ThemeProvider themeProvider;
+  final bool showOnboarding;
 
-  const ArmorApp({super.key, required this.themeProvider});
+  const ArmorApp({
+    super.key,
+    required this.themeProvider,
+    this.showOnboarding = false,
+  });
 
   @override
   State<ArmorApp> createState() => _ArmorAppState();
@@ -57,7 +70,9 @@ class _ArmorAppState extends State<ArmorApp> {
             darkTheme: themeProvider.getTheme(Brightness.dark),
             themeMode: themeProvider.themeMode,
             debugShowCheckedModeBanner: false,
-            home: const SplashScreen(),
+            home: widget.showOnboarding
+                ? const OnboardingScreen()
+                : const SplashScreen(),
             routes: {'/settings': (context) => const SettingsScreen()},
           );
         },

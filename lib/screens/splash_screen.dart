@@ -250,7 +250,7 @@ class _SplashScreenState extends State<SplashScreen>
                                 color: colorScheme.error,
                               ),
 
-                              const SizedBox(height: 16),
+                              const SizedBox(height: 10),
 
                               // Error Text
                               Padding(
@@ -266,7 +266,7 @@ class _SplashScreenState extends State<SplashScreen>
                                 ),
                               ),
 
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 16),
 
                               // Retry Button
                               FilledButton.icon(

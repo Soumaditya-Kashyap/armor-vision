@@ -41,13 +41,14 @@ class AppSettingsAdapter extends TypeAdapter<AppSettings> {
       defaultExportPassword: fields[21] as String?,
       preferredExportFormat: fields[22] as String?,
       lastExportDate: fields[23] as DateTime?,
+      hasCompletedOnboarding: fields[24] as bool?,
     );
   }
 
   @override
   void write(BinaryWriter writer, AppSettings obj) {
     writer
-      ..writeByte(24)
+      ..writeByte(25)
       ..writeByte(0)
       ..write(obj.isDarkMode)
       ..writeByte(1)
@@ -95,7 +96,9 @@ class AppSettingsAdapter extends TypeAdapter<AppSettings> {
       ..writeByte(22)
       ..write(obj.preferredExportFormat)
       ..writeByte(23)
-      ..write(obj.lastExportDate);
+      ..write(obj.lastExportDate)
+      ..writeByte(24)
+      ..write(obj.hasCompletedOnboarding);
   }
 
   @override

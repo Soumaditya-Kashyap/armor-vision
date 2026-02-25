@@ -77,6 +77,9 @@ class AppSettings extends HiveObject {
   @HiveField(23)
   DateTime? lastExportDate;
 
+  @HiveField(24)
+  bool? hasCompletedOnboarding;
+
   AppSettings({
     this.isDarkMode = false,
     this.isBiometricEnabled = true,
@@ -102,6 +105,7 @@ class AppSettings extends HiveObject {
     this.defaultExportPassword,
     this.preferredExportFormat,
     this.lastExportDate,
+    this.hasCompletedOnboarding = false,
   });
 
   // Getter to provide a default theme mode
@@ -132,6 +136,7 @@ class AppSettings extends HiveObject {
     String? defaultExportPassword,
     String? preferredExportFormat,
     DateTime? lastExportDate,
+    bool? hasCompletedOnboarding,
   }) {
     return AppSettings(
       isDarkMode: isDarkMode ?? this.isDarkMode,
@@ -161,6 +166,8 @@ class AppSettings extends HiveObject {
       preferredExportFormat:
           preferredExportFormat ?? this.preferredExportFormat,
       lastExportDate: lastExportDate ?? this.lastExportDate,
+      hasCompletedOnboarding:
+          hasCompletedOnboarding ?? this.hasCompletedOnboarding,
     );
   }
 }
