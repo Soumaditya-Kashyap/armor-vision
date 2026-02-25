@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/password_entry.dart';
 import '../models/export_models.dart';
@@ -191,17 +192,16 @@ class ExportPasswordService {
       Directory exportDir;
 
       if (Platform.isAndroid) {
-        // Android: Use Downloads/Armor directory
-        final downloadDir = Directory('/storage/emulated/0/Download');
-        exportDir = Directory('${downloadDir.path}/Armor');
+        // Android: Use Internal Storage/Armor/PDFs directory
+        exportDir = Directory('/storage/emulated/0/Armor/PDFs');
       } else if (Platform.isIOS) {
         // iOS: Use app documents directory
         final docDir = await getApplicationDocumentsDirectory();
-        exportDir = Directory('${docDir.path}/Exports');
+        exportDir = Directory('${docDir.path}/Armor/PDFs');
       } else {
         // Other platforms: Use app documents directory
         final docDir = await getApplicationDocumentsDirectory();
-        exportDir = Directory('${docDir.path}/Exports');
+        exportDir = Directory('${docDir.path}/Armor/PDFs');
       }
 
       // Create directory if it doesn't exist
@@ -220,6 +220,11 @@ class ExportPasswordService {
       debugPrint('✅ File saved: $filePath');
       debugPrint('📏 File size: ${fileBytes.length} bytes');
 
+      // Notify Android MediaStore so file appears instantly in file pickers
+      if (Platform.isAndroid) {
+        await _scanMediaFile(filePath);
+      }
+
       return filePath;
     } catch (e) {
       debugPrint('❌ Failed to save file: $e');
@@ -230,13 +235,24 @@ class ExportPasswordService {
   /// Get export directory path for display
   Future<String> getExportDirectoryPath() async {
     if (Platform.isAndroid) {
-      return '/storage/emulated/0/Download/Armor';
+      return '/storage/emulated/0/Armor/PDFs';
     } else if (Platform.isIOS) {
       final docDir = await getApplicationDocumentsDirectory();
-      return '${docDir.path}/Exports';
+      return '${docDir.path}/Armor/PDFs';
     } else {
       final docDir = await getApplicationDocumentsDirectory();
-      return '${docDir.path}/Exports';
+      return '${docDir.path}/Armor/PDFs';
+    }
+  }
+
+  /// Trigger media scan on Android so file appears instantly in file pickers
+  Future<void> _scanMediaFile(String filePath) async {
+    try {
+      const platform = MethodChannel('com.example.armor/media_scanner');
+      await platform.invokeMethod('scanFile', {'path': filePath});
+      debugPrint('✅ Media scan triggered for export file');
+    } catch (e) {
+      debugPrint('⚠️ Media scan failed: $e');
     }
   }
 

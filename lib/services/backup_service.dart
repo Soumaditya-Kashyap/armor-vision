@@ -698,9 +698,8 @@ class BackupService {
       Directory exportDir;
 
       if (Platform.isAndroid) {
-        // Android: Use Downloads/Armor/Backups directory
-        final downloadDir = Directory('/storage/emulated/0/Download');
-        exportDir = Directory('${downloadDir.path}/Armor/Backups');
+        // Android: Use Internal Storage/Armor/Backups directory
+        exportDir = Directory('/storage/emulated/0/Armor/Backups');
       } else if (Platform.isIOS) {
         // iOS: Use app documents directory
         final docDir = await getApplicationDocumentsDirectory();
@@ -755,10 +754,10 @@ class BackupService {
       Directory backupDir;
 
       if (Platform.isAndroid) {
-        backupDir = Directory('/storage/emulated/0/Download/Armor/Backups');
+        backupDir = Directory('/storage/emulated/0/Armor/Backups');
       } else if (Platform.isIOS) {
         final docDir = await getApplicationDocumentsDirectory();
-        backupDir = Directory('${docDir.path}/Backups');
+        backupDir = Directory('${docDir.path}/Armor/Backups');
       } else {
         final docDir = await getApplicationDocumentsDirectory();
         backupDir = Directory('${docDir.path}/Armor/Backups');
@@ -809,10 +808,10 @@ class BackupService {
       String backupDirPath;
 
       if (Platform.isAndroid) {
-        backupDirPath = '/storage/emulated/0/Download/Armor/Backups';
+        backupDirPath = '/storage/emulated/0/Armor/Backups';
       } else if (Platform.isIOS) {
         final docDir = await getApplicationDocumentsDirectory();
-        backupDirPath = '${docDir.path}/Backups';
+        backupDirPath = '${docDir.path}/Armor/Backups';
       } else {
         final docDir = await getApplicationDocumentsDirectory();
         backupDirPath = '${docDir.path}/Armor/Backups';
