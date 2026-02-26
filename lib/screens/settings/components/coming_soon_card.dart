@@ -31,7 +31,7 @@ class ComingSoonCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Security settings, backup options, and more customization features will be available in future updates.',
+            'More features and customization options are on the way. Stay tuned!',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: colorScheme.onSurface.withOpacity(0.7),
             ),

@@ -18,6 +18,8 @@ import '../../widgets/dialogs/export_progress_dialog.dart';
 import '../../widgets/dialogs/export_success_dialog.dart';
 import '../../widgets/dialogs/set_default_password_dialog.dart';
 import '../backup/backup_restore_screen.dart';
+import 'about_screen.dart';
+import 'developer_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -374,13 +376,112 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
               const SizedBox(height: 32),
 
-              // Coming Soon Section
+              // More Settings Section
               const SectionHeader(
-                title: 'More Settings',
-                icon: Icons.construction_rounded,
+                title: 'More',
+                icon: Icons.more_horiz_rounded,
               ),
               const SizedBox(height: 16),
+              _SettingsNavTile(
+                icon: Iconsax.info_circle,
+                title: 'About ARMOR',
+                subtitle: 'How the app works, features & privacy',
+                onTap: () => Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const AboutScreen())),
+              ),
+              const SizedBox(height: 10),
+              _SettingsNavTile(
+                icon: Iconsax.user,
+                title: 'Developer',
+                subtitle: 'Meet the creator & get in touch',
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const DeveloperScreen()),
+                ),
+              ),
+              const SizedBox(height: 10),
               const ComingSoonCard(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Navigation Tile ────────────────────────────────────────────────────────
+
+class _SettingsNavTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _SettingsNavTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: colorScheme.outline.withValues(alpha: 0.12),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: colorScheme.onPrimaryContainer,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colorScheme.onSurface.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: colorScheme.onSurface.withValues(alpha: 0.3),
+              ),
             ],
           ),
         ),
