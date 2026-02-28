@@ -162,7 +162,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isLastPage = _currentPage == _kPages.length - 1;
-    final double btnRadius = screenWidth * 0.145;
+    final double btnRadius = screenWidth * 0.108;
 
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
@@ -189,7 +189,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             nextButtonBuilder: (context) {
               return Icon(
                 Icons.arrow_forward_rounded,
-                size: screenWidth * 0.07,
+                size: screenWidth * 0.055,
                 color: Colors.white,
               );
             },
@@ -214,19 +214,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 onTap: _completeOnboarding,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
+                    horizontal: 14,
+                    vertical: 7,
                   ),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
                   ),
                   child: Text(
-                    'Skip',
+                    'SKIP',
                     style: GoogleFonts.bricolageGrotesque(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white.withValues(alpha: 0.8),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white.withValues(alpha: 0.7),
+                      letterSpacing: 2.0,
                     ),
                   ),
                 ),
@@ -256,95 +260,180 @@ class _OnboardingPageWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final iconSize = size.width * 0.16;
+    final iconSize = size.width * 0.13;
+    // Responsive bottom pad: clears the concentric button circle
+    final bottomPad = size.height * 0.14 + size.width * 0.108;
 
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
         child: Column(
           children: [
-            SizedBox(height: size.height * 0.07),
+            SizedBox(height: size.height * 0.055),
 
-            // Indicator dots
+            // ── Indicator ──
             _PageIndicator(total: totalPages, current: pageIndex),
 
-            SizedBox(height: size.height * 0.06),
+            SizedBox(height: size.height * 0.03),
 
-            // Clean icon in a white-tinted circle
+            // ── Page number with flanking lines ──
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 20,
+                  height: 1,
+                  color: Colors.white.withValues(alpha: 0.2),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  '0${pageIndex + 1}',
+                  style: GoogleFonts.bricolageGrotesque(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white.withValues(alpha: 0.35),
+                    letterSpacing: 3.0,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Container(
+                  width: 20,
+                  height: 1,
+                  color: Colors.white.withValues(alpha: 0.2),
+                ),
+              ],
+            ),
+
+            SizedBox(height: size.height * 0.03),
+
+            // ── Retro double-ring icon ──
             Container(
-              width: iconSize * 1.7,
-              height: iconSize * 1.7,
+              width: iconSize * 1.75,
+              height: iconSize * 1.75,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.12),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  width: 1.5,
+                ),
               ),
               child: Center(
-                child: Icon(page.icon, size: iconSize, color: Colors.white),
+                child: Container(
+                  width: iconSize * 1.35,
+                  height: iconSize * 1.35,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.08),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.1),
+                      width: 1,
+                    ),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      page.icon,
+                      size: iconSize * 0.85,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
               ),
             ),
 
-            SizedBox(height: size.height * 0.05),
+            SizedBox(height: size.height * 0.035),
 
-            // Headline — bold white
+            // ── Headline ──
             Text(
               page.headline,
               textAlign: TextAlign.center,
               style: GoogleFonts.bricolageGrotesque(
-                fontSize: 30,
+                fontSize: 28,
                 fontWeight: FontWeight.w800,
                 color: Colors.white,
                 height: 1.15,
-                letterSpacing: -0.5,
+                letterSpacing: -0.3,
               ),
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
 
-            // Description
+            // ── Geometric divider ──
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 24,
+                  height: 1,
+                  color: Colors.white.withValues(alpha: 0.18),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  width: 5,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  width: 24,
+                  height: 1,
+                  color: Colors.white.withValues(alpha: 0.18),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 14),
+
+            // ── Description ──
             Text(
               page.description,
               textAlign: TextAlign.center,
               style: GoogleFonts.bricolageGrotesque(
-                fontSize: 14.5,
+                fontSize: 13.5,
                 fontWeight: FontWeight.w400,
-                color: Colors.white.withValues(alpha: 0.7),
+                color: Colors.white.withValues(alpha: 0.65),
                 height: 1.6,
-                letterSpacing: 0.1,
+                letterSpacing: 0.15,
               ),
             ),
 
-            const SizedBox(height: 28),
+            const SizedBox(height: 22),
 
-            // Feature chips
+            // ── Feature chips ──
             if (page.chips.isNotEmpty)
               Wrap(
-                spacing: 10,
-                runSpacing: 10,
+                spacing: 8,
+                runSpacing: 8,
                 alignment: WrapAlignment.center,
                 children: page.chips
                     .map((chip) => _ChipWidget(chip: chip))
                     .toList(),
               ),
 
-            // Last page — "ENTER ARMOR" hint above the button
+            // ── Last page: "ENTER ARMOR" CTA ──
             if (isLastPage) ...[
               const Spacer(),
+              Container(
+                width: 32,
+                height: 1,
+                color: Colors.white.withValues(alpha: 0.15),
+              ),
+              const SizedBox(height: 12),
               Text(
-                'ENTER  ARMOR',
+                '\u25B8  ENTER  ARMOR  \u25C2',
                 style: GoogleFonts.bricolageGrotesque(
-                  fontSize: 11,
+                  fontSize: 10,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.45),
-                  letterSpacing: 5.0,
+                  color: Colors.white.withValues(alpha: 0.4),
+                  letterSpacing: 4.0,
                 ),
               ),
-              const SizedBox(height: 8),
-              Icon(
-                Icons.keyboard_double_arrow_down_rounded,
-                color: Colors.white.withValues(alpha: 0.25),
-                size: 18,
-              ),
-              SizedBox(height: size.height * 0.12),
+              SizedBox(height: bottomPad),
             ],
           ],
         ),
@@ -370,14 +459,14 @@ class _PageIndicator extends StatelessWidget {
         return AnimatedContainer(
           duration: const Duration(milliseconds: 350),
           curve: Curves.easeOutCubic,
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          height: 4,
-          width: isActive ? 28 : 8,
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          height: 3,
+          width: isActive ? 24 : 3,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(1),
             color: isActive
                 ? Colors.white
-                : Colors.white.withValues(alpha: 0.25),
+                : Colors.white.withValues(alpha: 0.35),
           ),
         );
       }),
@@ -395,23 +484,26 @@ class _ChipWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.25),
+          width: 1,
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(chip.icon, size: 14, color: Colors.white),
+          Icon(chip.icon, size: 13, color: Colors.white.withValues(alpha: 0.7)),
           const SizedBox(width: 7),
           Text(
-            chip.label,
+            chip.label.toUpperCase(),
             style: GoogleFonts.bricolageGrotesque(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Colors.white.withValues(alpha: 0.85),
-              letterSpacing: 0.2,
+              fontSize: 9.5,
+              fontWeight: FontWeight.w600,
+              color: Colors.white.withValues(alpha: 0.7),
+              letterSpacing: 0.8,
             ),
           ),
         ],

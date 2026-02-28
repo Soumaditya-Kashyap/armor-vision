@@ -109,8 +109,8 @@ class DeveloperScreen extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               'A passionate developer from Assam who builds practical solutions to real-world problems. '
-              'Skilled in Flutter, full-stack development, and AI/ML — focused on creating apps that '
-              'are clean, performant, and genuinely useful. ARMOR was built from scratch as a privacy-first '
+              'Believes in building technology that respects user privacy, works seamlessly offline, and '
+              'delivers a smooth, reliable experience. ARMOR was built from scratch as a privacy-first '
               'alternative to cloud-dependent password managers. '
               'Every line of code is written with the user\'s security and experience in mind.',
               style: theme.textTheme.bodyMedium?.copyWith(
